@@ -1,59 +1,65 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
+import { FaCar, FaUsers, FaChartLine, FaDollarSign, FaEnvelope } from "react-icons/fa";
 
 const Sidebar = ({ role, isOpen }) => {
 
-  const buyerMenu = [
-    { name: "Dashboard", path: "/buyer-dashboard" },
-    { name: "Browse Cars", path: "/browse" },
-    { name: "Saved Cars", path: "/saved" },
-    { name: "Messages", path: "/messages" },
-  ];
+  const menus = {
+    buyer: [
+      { name: "Dashboard", path: "/buyer", icon: <FaChartLine /> },
+      { name: "Browse Cars", path: "/browse", icon: <FaCar /> },
+      { name: "Saved Cars", path: "/saved", icon: <FaDollarSign /> },
+      { name: "Messages", path: "/messages", icon: <FaEnvelope /> },
+    ],
 
-  const sellerMenu = [
-    { name: "Dashboard", path: "/seller-dashboard" },
-    { name: "Add Car", path: "/add-car" },
-    { name: "My Listings", path: "/my-listings" },
-    { name: "Inquiries", path: "/inquiries" },
-  ];
+    seller: [
+      { name: "Dashboard", path: "/seller", icon: <FaChartLine /> },
+      { name: "Add Car", path: "/add-car", icon: <FaCar /> },
+      { name: "My Listings", path: "/my-listings", icon: <FaDollarSign /> },
+      { name: "Inquiries", path: "/inquiries", icon: <FaEnvelope /> },
+    ],
 
-  const adminMenu = [
-    { name: "Dashboard", path: "/admin-dashboard" },
-    { name: "Users", path: "/users" },
-    { name: "Listings", path: "/listings" },
-    { name: "Reports", path: "/reports" },
-  ];
+    admin: [
+      { name: "Dashboard", path: "/admin", icon: <FaChartLine /> },
+      { name: "Users", path: "/users", icon: <FaUsers /> },
+      { name: "Listings", path: "/listings", icon: <FaCar /> },
+      { name: "Reports", path: "/reports", icon: <FaDollarSign /> },
+    ]
+  };
 
-  const menu =
-    role === "buyer"
-      ? buyerMenu
-      : role === "seller"
-        ? sellerMenu
-        : adminMenu;
+  const menu = menus[role] || [];
 
   return (
     <aside
-      className={`bg-white/5 backdrop-blur-xl border-r border-white/10
-  text-gray-200 w-64 min-h-screen pt-20 px-4 fixed md:relative
-  transition-transform duration-300
-  ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
+      className={`bg-gray-900 text-yellow-400 w-64 min-h-screen pt-24 px-4 fixed md:relative
+      shadow-xl transition-transform duration-300
+      ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
     >
+
+      {/* Logo */}
+      <div className="absolute top-6 left-4 text-2xl font-bold tracking-wider">
+        Vehicle Vault
+      </div>
+
+      {/* Menu */}
       {menu.map((item, index) => (
         <NavLink
           key={index}
           to={item.path}
           className={({ isActive }) =>
-            `block px-4 py-3 rounded-lg mb-2 transition-all duration-300 ${isActive
-              ? "bg-amber-500 text-black font-semibold"
-              : "hover:bg-white/10 hover:text-white"
-            }`
+            `flex items-center gap-3 px-4 py-3 rounded-lg mb-2 transition-all duration-300
+            ${isActive
+              ? "bg-yellow-500 text-gray-900 font-semibold"
+              : "hover:bg-yellow-500 hover:text-gray-900"}`
           }
         >
-          {item.name}
+          <span className="text-lg">{item.icon}</span>
+          <span>{item.name}</span>
         </NavLink>
       ))}
+
     </aside>
   );
 };
 
-export default Sidebar; 
+export default Sidebar;
