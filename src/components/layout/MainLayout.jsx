@@ -7,15 +7,31 @@ const MainLayout = ({ role }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="flex bg-gradient-to-br from-gray-900 via-gray-800 to-black min-h-screen">
+    <div className="bg-[#0D0D0D] min-h-screen font-sans text-gray-200 flex">
+      
+      {/* Sidebar is fixed. 
+        We pass onClose={() => setIsOpen(false)} so clicking a link on mobile closes the menu.
+      */}
+      <Sidebar 
+        role={role} 
+        isOpen={isOpen} 
+        onClose={() => setIsOpen(false)} 
+      />
 
-      <Navbar toggleSidebar={() => setIsOpen(!isOpen)} />
+      {/* Main Content Wrapper 
+        md:ml-64 pushes the content to the right on desktop so it doesn't hide behind the 64-width Sidebar.
+      */}
+      <div className="flex-1 flex flex-col min-h-screen md:ml-64 transition-all duration-300">
+        
+        {/* Navbar sits at the top of the content area */}
+        <Navbar toggleSidebar={() => setIsOpen(!isOpen)} role={role} />
 
-      <Sidebar role={role} isOpen={isOpen} />
-
-      <main className="flex-1 pt-20 p-6 text-gray-200 w-full">
-        <Outlet />
-      </main>
+        {/* The actual page content gets injected here */}
+        <main className="flex-1 p-6 lg:p-10 w-full overflow-x-hidden">
+          <Outlet />
+        </main>
+        
+      </div>
 
     </div>
   );
