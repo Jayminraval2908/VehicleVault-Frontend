@@ -1,25 +1,31 @@
 import API from "./api";
 
 const testDriveService = {
-  // POST: Book a new test drive session
   bookTestDrive: async (data) => {
     const response = await API.post("/testdrives/book", data);
     return response.data;
   },
 
-  // GET: Fetch test drives for a specific buyer
-  getBuyerBookings: async (buyerId) => {
-    const response = await API.get(`/testdrives/buyer/${buyerId}`);
+  getAllBookings: async () => {
+    const response = await API.get("/testdrives");
     return response.data;
   },
 
-  // GET: Fetch test drives for a specific vehicle (for Sellers)
-  getVehicleBookings: async (vehicleId) => {
-    const response = await API.get(`/testdrives/vehicle/${vehicleId}`);
+  getBuyerBookings: async () => {
+    const response = await API.get("/testdrives/my-bookings");
+    return response.data.data || response.data;
+  },
+
+  getBookingById: async (id) => {
+    const response = await API.get(`/testdrives/details/${id}`);
     return response.data;
   },
 
-  // DELETE: Cancel a booking
+  updateStatus: async (id, data) => {
+    const response = await API.put(`/testdrives/status/${id}`, data);
+    return response.data;
+  },
+
   cancelBooking: async (id) => {
     const response = await API.delete(`/testdrives/${id}`);
     return response.data;

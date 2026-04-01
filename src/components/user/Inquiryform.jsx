@@ -28,7 +28,7 @@ export default function InquiryForm({ onSubmit, loading }) {
       </Button>
     </form>
   );
-}import React, { useState } from "react";
+} import React, { useState } from "react";
 import Button from "../common/Button";
 import { Send, MessageCircle } from "lucide-react";
 

@@ -5,7 +5,7 @@ import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
 import Loader from "../../components/common/Loader";
 import Card from "../../components/common/Card";
-import { Calendar, Clock, MapPin, ChevronLeft } from "lucide-react";
+import { Calendar, ChevronLeft } from "lucide-react";
 import { toast } from "react-toastify";
 
 const BookTestDrive = () => {
@@ -18,6 +18,8 @@ const BookTestDrive = () => {
     location: "Main Showroom - Luxury Wing", // Default or static location
   });
 
+  const today = new Date().toISOString().split("T")[0];
+
   const handleBooking = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -29,7 +31,7 @@ const BookTestDrive = () => {
         location: formData.location
       });
       toast.success("Test Drive Requested! The seller will confirm shortly.");
-      navigate("/buyer/dashboard");
+      navigate("/buyer/bookings",{state:{refresh : true}});
     } catch (err) {
       toast.error(err.response?.data?.message || "Scheduling failed.");
     } finally {
@@ -82,7 +84,7 @@ const BookTestDrive = () => {
           <Input
             label="Viewing Location"
             value={formData.location}
-            disabled
+            readOnly
             className="opacity-60 cursor-not-allowed"
           />
 

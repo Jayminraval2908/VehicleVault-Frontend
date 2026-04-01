@@ -19,7 +19,7 @@ const ImageUpload = ({ onUpload }) => {
         {preview ? (
           <>
             <img src={preview} className="h-full w-full object-cover rounded-2xl" alt="Preview" />
-            <button 
+            <button
               onClick={() => setPreview(null)}
               className="absolute top-2 right-2 bg-red-600 p-1 rounded-full text-white"
             >
@@ -30,9 +30,9 @@ const ImageUpload = ({ onUpload }) => {
           <div className="text-center">
             <Upload className="mx-auto text-gray-600 mb-2" size={32} />
             <p className="text-xs text-gray-500">Click or drag luxury vehicle photo</p>
-            <input 
-              type="file" 
-              className="absolute inset-0 opacity-0 cursor-pointer" 
+            <input
+              type="file"
+              className="absolute inset-0 opacity-0 cursor-pointer"
               onChange={handleImageChange}
             />
           </div>

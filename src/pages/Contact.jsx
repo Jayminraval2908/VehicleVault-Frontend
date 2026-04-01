@@ -23,7 +23,7 @@ export default function Contact() {
     try {
       // Replace this with your actual API call to your backend/EmailJS/etc.
       console.log("Form Data:", data);
-      
+
       // Simulate API delay
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
@@ -78,9 +78,8 @@ export default function Contact() {
             <input
               {...register("fullName", { required: "Name is required" })}
               type="text"
-              className={`w-full bg-white/5 border ${
-                errors.fullName ? "border-red-500" : "border-white/10"
-              } rounded-lg px-4 py-3 focus:outline-none focus:border-[#D4AF37] transition-all`}
+              className={`w-full bg-white/5 border ${errors.fullName ? "border-red-500" : "border-white/10"
+                } rounded-lg px-4 py-3 focus:outline-none focus:border-[#D4AF37] transition-all`}
               placeholder="John Doe"
             />
             {errors.fullName && (
@@ -102,9 +101,8 @@ export default function Contact() {
                 },
               })}
               type="email"
-              className={`w-full bg-white/5 border ${
-                errors.email ? "border-red-500" : "border-white/10"
-              } rounded-lg px-4 py-3 focus:outline-none focus:border-[#D4AF37] transition-all`}
+              className={`w-full bg-white/5 border ${errors.email ? "border-red-500" : "border-white/10"
+                } rounded-lg px-4 py-3 focus:outline-none focus:border-[#D4AF37] transition-all`}
               placeholder="john@example.com"
             />
             {errors.email && (
@@ -118,14 +116,13 @@ export default function Contact() {
               Message
             </label>
             <textarea
-              {...register("message", { 
+              {...register("message", {
                 required: "Please enter a message",
                 minLength: { value: 10, message: "Message too short" }
               })}
               rows="4"
-              className={`w-full bg-white/5 border ${
-                errors.message ? "border-red-500" : "border-white/10"
-              } rounded-lg px-4 py-3 focus:outline-none focus:border-[#D4AF37] transition-all resize-none`}
+              className={`w-full bg-white/5 border ${errors.message ? "border-red-500" : "border-white/10"
+                } rounded-lg px-4 py-3 focus:outline-none focus:border-[#D4AF37] transition-all resize-none`}
               placeholder="Tell us about your requirements..."
             ></textarea>
             {errors.message && (

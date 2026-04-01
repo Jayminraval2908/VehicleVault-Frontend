@@ -11,40 +11,152 @@ import { toast } from "react-toastify";
 const AddVehicle = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  
+  const [files, setFiles] = useState([]);
+  const [coverFile, setCoverFile] = useState(null);
+
   const [formData, setFormData] = useState({
     make: "",
     model: "",
     year: "",
     price: "",
     mileage: "",
-    fuelType: "Petrol",
-    transmission: "Automatic",
+    fuel_type: "",
+    transmission: "",
     description: "",
-    imageUrl: "" // Assuming URL for now, or you can integrate ImageUpload.jsx
+
   });
+
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+  //   try {
+  //     const submissionData = {
+  //       ...formData,
+  //       year: Number(formData.year),
+  //       price: Number(formData.price),
+  //       mileage: Number(formData.mileage)
+  //     };
+
+  //     if (isNaN(submissionData.year) || isNaN(submissionData.price)) {
+  //       toast.error("Please enter valid numbers for Year, Price, and Mileage.");
+  //       setLoading(false);
+  //       return;
+  //     }
+  //     await vehicleService.addVehicle(submissionData);
+  //     toast.success("Vehicle Listed in the Vault Successfully!");
+  //     navigate("/seller/dashboard");
+  //   } catch (err) {
+  //     toast.error("Error creating listing. Check all fields.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  //   const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+
+  //   try {
+  //     const form = new FormData();
+
+  //     form.append("make", formData.make);
+  //     form.append("model", formData.model);
+  //     form.append("year", Number(formData.year));
+  //     form.append("price", Number(formData.price));
+  //     form.append("mileage", Number(formData.mileage));
+  //     form.append("fuel_type", formData.fuelType);
+  //     form.append("transmission", formData.transmission);
+  //     form.append("description", formData.description);
+
+  //     // 🔥 IMPORTANT
+  //     form.append("image", file);
+
+  //     await vehicleService.addVehicle(form);
+
+  //     toast.success("Vehicle Listed Successfully!");
+  //     navigate("/seller/dashboard");
+
+  //   } catch (err) {
+  //     console.error(err);
+  //     toast.error("Error creating listing");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+
+  //   try {
+  //     const form = new FormData();
+
+  //     form.append("make", formData.make);
+  //     form.append("model", formData.model);
+  //     form.append("year", Number(formData.year));
+  //     form.append("price", Number(formData.price));
+  //     form.append("mileage", Number(formData.mileage));
+  //     form.append("fuel_type", formData.fuel_type);
+  //     form.append("transmission", formData.transmission);
+  //     form.append("description", formData.description);
+
+  //     // 🔥 MULTIPLE IMAGES
+  //     files.forEach((file) => {
+  //       form.append("images", file);
+  //     });
+
+
+  //     await vehicleService.addVehicle(form);
+
+  //     toast.success("Vehicle Listed Successfully!");
+  //     navigate("/seller/dashboard");
+
+  //   } catch (err) {
+  //     console.error(err);
+  //     toast.error("Error creating listing");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    try {
-      const submissionData = {
-        ...formData,
-        year: Number(formData.year),
-        price: Number(formData.price),
-        mileage: Number(formData.mileage)
-      };
 
-      if (isNaN(submissionData.year) || isNaN(submissionData.price)) {
-        toast.error("Please enter valid numbers for Year, Price, and Mileage.");
-        setLoading(false);
-        return;
+    try {
+      const form = new FormData();
+
+      form.append("make", formData.make);
+      form.append("model", formData.model);
+      form.append("year", Number(formData.year));
+      form.append("price", Number(formData.price));
+      form.append("mileage", Number(formData.mileage));
+      form.append("fuel_type", formData.fuel_type);
+      form.append("transmission", formData.transmission);
+      form.append("description", formData.description);
+
+      // ✅ IMPORTANT: default status = draft
+      form.append("status", "draft");
+
+      // ✅ Cover image first
+      if (coverFile) {
+        form.append("images", coverFile);
       }
-      await vehicleService.addVehicle(formData);
-      toast.success("Vehicle Listed in the Vault Successfully!");
+
+      // ✅ Then gallery images
+      files.forEach((file) => {
+        form.append("images", file);
+      });
+
+      await vehicleService.addVehicle(form);
+
+      toast.success("Vehicle added to Active Inventory ✅");
       navigate("/seller/dashboard");
+
     } catch (err) {
-      toast.error("Error creating listing. Check all fields.");
+      console.error(err);
+      toast.error("Error creating listing");
     } finally {
       setLoading(false);
     }
@@ -70,76 +182,119 @@ const AddVehicle = () => {
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* General Specs */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Input 
-                label="Make (Brand)" 
-                placeholder="e.g. Lamborghini" 
+              <Input
+                label="Make (Brand)"
+                placeholder="e.g. Lamborghini"
                 value={formData.make}
-                onChange={(e) => setFormData({...formData, make: e.target.value})}
-                required 
+                onChange={(e) => setFormData({ ...formData, make: e.target.value })}
+                required
               />
-              <Input 
-                label="Model" 
-                placeholder="e.g. Aventador" 
+              <Input
+                label="Model"
+                placeholder="e.g. Aventador"
                 value={formData.model}
-                onChange={(e) => setFormData({...formData, model: e.target.value})}
-                required 
+                onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                required
               />
-              <Input 
-                label="Year" 
+              <Input
+                label="Year"
                 type="number"
-                placeholder="2024" 
+                placeholder="2024"
                 value={formData.year}
-                onChange={(e) => setFormData({...formData, year: e.target.value})}
-                required 
+                onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                required
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Input 
-                label="Price ($)" 
+              <Input
+                label="Price (rs.)"
                 type="number"
-                placeholder="500000" 
+                placeholder="500000"
                 value={formData.price}
-                onChange={(e) => setFormData({...formData, price: e.target.value})}
-                required 
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                required
               />
-              <Input 
-                label="Mileage (km)" 
+              <Input
+                label="Mileage (km)"
                 type="number"
-                placeholder="1200" 
+                placeholder="1200"
                 value={formData.mileage}
-                onChange={(e) => setFormData({...formData, mileage: e.target.value})}
-                required 
+                onChange={(e) => setFormData({ ...formData, mileage: e.target.value })}
+                required
               />
+
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               <Input 
-                label="Fuel Type" 
-                placeholder="Petrol / Hybrid / Electric" 
-                value={formData.fuelType}
-                onChange={(e) => setFormData({...formData, fuelType: e.target.value})}
-              />
-              <Input 
-                label="Image URL" 
-                placeholder="https://image-link.com" 
-                value={formData.imageUrl}
-                onChange={(e) => setFormData({...formData, imageUrl: e.target.value})}
-              />
+              <div>
+                <label className="text-sm text-gray-400 mb-2 block">Fuel Type</label>
+                <select
+                  value={formData.fuel_type}
+                  onChange={(e) =>
+                    setFormData({ ...formData, fuel_type: e.target.value })
+                  }
+                  className="w-full bg-[#111] border border-gray-700 p-3 rounded-lg text-white"
+                  required
+                >
+                  <option value="">Select Fuel Type</option>
+                  <option value="Petrol">Petrol</option>
+                  <option value="Diesel">Diesel</option>
+                  <option value="Electric">Electric</option>
+                  <option value="Hybrid">Hybrid</option>
+                  <option value="CNG">CNG</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm text-gray-400 mb-2 block">Cover Image</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setCoverFile(e.target.files[0])}
+                  className="w-full bg-[#111] border border-gray-700 p-3 rounded-lg text-white"
+                  required
+                />
+
+                <label className="text-sm text-gray-400 mb-2 block mt-4">Gallery Images</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => setFiles([...e.target.files])}
+                  className="w-full bg-[#111] border border-gray-700 p-3 rounded-lg text-white"
+                />
+              </div>
+
+
+              <div>
+                <label className="text-sm text-gray-400 mb-2 block">Transmission</label>
+                <select
+                  value={formData.transmission}
+                  onChange={(e) =>
+                    setFormData({ ...formData, transmission: e.target.value })
+                  }
+                  className="w-full bg-[#111] border border-gray-700 p-3 rounded-lg text-white"
+                  required
+                >
+                  <option value="">Select Transmission</option>
+                  <option value="Manual">Manual</option>
+                  <option value="Automatic">Automatic</option>
+                </select>
+              </div>
             </div>
 
-            <Input 
-              label="Description" 
-              placeholder="Tell us about the history, condition, and special features..." 
+            <Input
+              label="Description"
+              placeholder="Tell us about the history, condition, and special features..."
               value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               className="h-32"
               required
             />
 
             <div className="pt-6 border-t border-gray-800">
               <Button type="submit" className="w-full py-4 text-lg font-bold flex items-center justify-center gap-2">
-                <Plus size={20} /> PUBLISH TO MARKETPLACE
+                <Plus size={20} /> ADD TO INVENTORY
               </Button>
             </div>
           </form>

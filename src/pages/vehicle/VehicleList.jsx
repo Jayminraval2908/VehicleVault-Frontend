@@ -14,7 +14,14 @@ const VehicleList = () => {
     const fetchVehicles = async () => {
       try {
         const data = await vehicleService.getAllVehicles();
-        setVehicles(data.data || []);
+
+        // ✅ only approved vehicles visible in marketplace
+        const approvedVehicles = data.filter(
+          (v) => v.status === "Approved"
+        );
+
+        setVehicles(approvedVehicles);
+        console.log("🔥 Vehicles:", data);
       } catch (err) {
         console.error("Failed to load collection", err);
       } finally {
@@ -51,20 +58,24 @@ const VehicleList = () => {
           </div>
         ) : (
           vehicles.map((car) => (
+
             <Card key={car._id} className="group p-0 overflow-hidden border-gray-900 bg-[#111111]">
               {/* Image Container */}
               <div className="relative aspect-[16/10] overflow-hidden">
                 <img
-                  src={car.imageUrl || "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?q=80&w=1000"}
+                  src={
+                    car.coverImage ||
+                    (car.images && car.images.length > 0 ? car.images[0] : "https://images.unsplash.com/photo-1503376780353-7e6692767b70")
+                  }
                   alt={car.model}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-transparent to-transparent opacity-80" />
-                
+
                 {/* Price Tag Overlay */}
                 <div className="absolute bottom-4 left-4">
                   <span className="text-2xl font-black text-[#D4AF37]">
-                    ${car.price?.toLocaleString()}
+                    ${car.price?.toLocaleString('en-IN')}
                   </span>
                 </div>
               </div>
@@ -95,7 +106,7 @@ const VehicleList = () => {
                   </div>
                   <div className="flex items-center gap-2 text-gray-400 text-xs">
                     <Fuel size={14} className="text-[#D4AF37]" />
-                    <span>{car.fuelType}</span>
+                    <span>{car.fuel_type || car.fuelType || "Not Specified"}</span>
                   </div>
                 </div>
 

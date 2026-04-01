@@ -16,16 +16,16 @@ export default function Home() {
   const navLinkStyle = "text-gray-300 hover:text-[#D4AF37] transition-colors duration-300 text-sm uppercase tracking-widest font-medium";
 
   return (
-    <motion.div 
+    <motion.div
       initial="hidden"
       animate="visible"
       className="min-h-screen text-white flex flex-col bg-cover bg-center bg-no-repeat bg-fixed"
-      style={{ 
-        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1646650922663-9b49d6daef4f?w=1200&auto=format&fit=crop&q=80')` 
+      style={{
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1646650922663-9b49d6daef4f?w=1200&auto=format&fit=crop&q=80')`
       }}
     >
       {/* NAVBAR */}
-      <motion.nav 
+      <motion.nav
         variants={{ hidden: { y: -20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}
         className="flex justify-between items-center px-6 md:px-10 py-5 border-b border-white/10 backdrop-blur-md sticky top-0 z-50"
       >
@@ -48,8 +48,8 @@ export default function Home() {
         </div>
 
         {/* Mobile Menu Toggle */}
-        <button 
-          className="md:hidden text-[#D4AF37]" 
+        <button
+          className="md:hidden text-[#D4AF37]"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
           {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
@@ -59,7 +59,7 @@ export default function Home() {
       {/* MOBILE MENU DROPDOWN */}
       <AnimatePresence>
         {isMenuOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
@@ -77,35 +77,35 @@ export default function Home() {
 
       {/* HERO SECTION */}
       <div className="flex flex-col justify-center items-center text-center flex-1 px-6 z-10 py-20 md:py-0">
-        <motion.h1 
+        <motion.h1
           variants={fadeInUp}
           className="text-4xl sm:text-6xl md:text-8xl font-bold text-[#D4AF37] drop-shadow-2xl tracking-tight leading-tight"
         >
           Buy & Sell <br className="hidden sm:block" /> Premium Vehicles
         </motion.h1>
 
-        <motion.p 
+        <motion.p
           variants={fadeInUp}
           transition={{ delay: 0.2 }}
           className="text-gray-400 mt-6 max-w-2xl text-base md:text-xl leading-relaxed drop-shadow-md"
         >
-          Explore a curated selection of luxury assets. 
+          Explore a curated selection of luxury assets.
           Connect with vetted sellers and secure your next masterpiece.
         </motion.p>
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
           className="flex flex-col sm:flex-row gap-4 mt-10 w-full sm:w-auto"
         >
-          <Button 
-            onClick={() => navigate("/signup")} 
+          <Button
+            onClick={() => navigate("/signup")}
             className="px-10 py-4 text-lg w-full sm:w-auto"
           >
             Get Started
           </Button>
-          <button 
+          <button
             onClick={() => navigate("/login")}
             className="border border-white/20 hover:border-[#D4AF37] hover:text-[#D4AF37] px-10 py-4 rounded-xl transition-all duration-300 backdrop-blur-sm"
           >

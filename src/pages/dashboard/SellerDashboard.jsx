@@ -1,43 +1,3 @@
-// import React from "react";
-
-// export default function SellerDashboard() {
-//   return (
-//     <div className="p-6 text-gray-200">
-
-//       <h1 className="text-3xl font-bold text-amber-400 mb-4">
-//         Seller Dashboard
-//       </h1>
-
-//       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-//         <div className="bg-black/40 border border-gray-700 rounded-xl p-5">
-//           <h2 className="text-lg text-amber-400">Add Vehicle</h2>
-//           <p className="text-gray-400 text-sm mt-2">
-//             List your car for sale.
-//           </p>
-//         </div>
-
-//         <div className="bg-black/40 border border-gray-700 rounded-xl p-5">
-//           <h2 className="text-lg text-amber-400">My Listings</h2>
-//           <p className="text-gray-400 text-sm mt-2">
-//             Manage your vehicle listings.
-//           </p>
-//         </div>
-
-//         <div className="bg-black/40 border border-gray-700 rounded-xl p-5">
-//           <h2 className="text-lg text-amber-400">Buyer Requests</h2>
-//           <p className="text-gray-400 text-sm mt-2">
-//             View inquiries from buyers.
-//           </p>
-//         </div>
-
-//       </div>
-
-//     </div>
-//   );
-// }
-
-
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import vehicleService from "../../services/vehicleService";
@@ -45,15 +5,16 @@ import inquiryService from "../../services/inquiryService";
 import Button from "../../components/common/Button";
 import Card from "../../components/common/Card";
 import Loader from "../../components/common/Loader";
-import { 
-  Plus, 
-  Edit3, 
-  Trash2, 
-  MessageCircle, 
-  Eye, 
-  BarChart3, 
+import { toast } from "react-toastify";
+import {
+  Plus,
+  Edit3,
+  Trash2,
+  MessageCircle,
+  Eye,
+  BarChart3,
   Car,
-  ChevronRight
+  ClipboardCheck
 } from "lucide-react";
 
 const SellerDashboard = () => {
@@ -64,23 +25,39 @@ const SellerDashboard = () => {
 
   useEffect(() => {
     const fetchSellerData = async () => {
+
       try {
-        // In a real app, you'd have a specific "getSellerVehicles" route
-        // For now, we fetch all and filter or assume user._id logic
-        const [vRes, iRes] = await Promise.all([
-          vehicleService.getAllVehicles(),
-          inquiryService.getAllInquiries() // Usually filtered by seller in backend
-        ]);
-        
-        setVehicles(vRes.data || []);
-        setInquiries(iRes.data || []);
+        const vehiclesData = await vehicleService.getSellerVehicles();
+        console.log("Vehicles API:", vehiclesData);
+
+        // ✅ FIXED
+        setVehicles(vehiclesData.data || []);
+
+        const inquiryPromises = (vehiclesData.data || []).map((v) =>
+          inquiryService.getInquiriesByVehicle(v._id)
+        );
+
+        const inquiryResults = await Promise.all(inquiryPromises);
+
+        // ✅ FIXED
+        const allInquiries = inquiryResults
+          .map((res) => res.data || [])
+          .flat();
+
+        setInquiries(allInquiries);
+
       } catch (err) {
         console.error("Seller Data Error", err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchSellerData();
+
+    const interval = setInterval(fetchSellerData, 10000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleDelete = async (id) => {
@@ -90,12 +67,30 @@ const SellerDashboard = () => {
     }
   };
 
+  const handlePublish = async (id) => {
+    try {
+      await vehicleService.publishVehicle(id);
+
+      toast.success("Vehicle sent to admin for approval 🚀");
+
+      // update UI instantly
+      setVehicles(prev =>
+        prev.map(v =>
+          v._id === id ? { ...v, status: "Pending" } : v
+        )
+      );
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to publish vehicle");
+    }
+  };
+
   if (loading) return <Loader fullScreen />;
 
   return (
     <div className="min-h-screen bg-[#0D0D0D] p-6 lg:p-12 text-white">
       <div className="max-w-7xl mx-auto">
-        
+
         {/* HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
           <div>
@@ -104,7 +99,7 @@ const SellerDashboard = () => {
             </h1>
             <p className="text-gray-500 text-sm mt-1">Manage your luxury inventory and incoming leads.</p>
           </div>
-          <Link to="/vehicle/add">
+          <Link to="/seller/add-vehicle">
             <Button className="flex items-center gap-2 px-8 py-4">
               <Plus size={20} /> LIST NEW VEHICLE
             </Button>
@@ -115,7 +110,7 @@ const SellerDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <StatBox icon={<Car />} label="Live Listings" count={vehicles.length} />
           <StatBox icon={<MessageCircle />} label="Total Inquiries" count={inquiries.length} />
-          <StatBox icon={<BarChart3 />} label="Profile Views" count="1.2k" />
+          <StatBox icon={<BarChart3 />} label="Avg. Engagement" count={`${vehicles.length > 0 ? (inquiries.length / vehicles.length).toFixed(1) : 0}x`} />
         </div>
 
         {/* INVENTORY TABLE */}
@@ -126,7 +121,7 @@ const SellerDashboard = () => {
               Update Frequency: Real-time
             </span>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -143,7 +138,11 @@ const SellerDashboard = () => {
                     <td className="p-6">
                       <div className="flex items-center gap-4">
                         <div className="w-16 h-12 bg-[#1a1a1a] rounded-lg overflow-hidden border border-gray-800">
-                          <img src={car.imageUrl} alt="" className="w-full h-full object-cover opacity-60" />
+                          <img
+                            src={car.images?.[0]}
+                            alt={car.model}
+                            className="w-full h-full object-cover opacity-60"
+                          />
                         </div>
                         <div>
                           <p className="font-bold text-white uppercase text-sm">{car.make} {car.model}</p>
@@ -151,24 +150,45 @@ const SellerDashboard = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="p-6 font-mono text-[#D4AF37]">${car.price?.toLocaleString()}</td>
+                    <td className="p-6 font-mono text-[#D4AF37]">Rs.{car.price?.toLocaleString()}</td>
                     <td className="p-6">
-                      <span className="px-3 py-1 rounded-full bg-green-500/10 text-green-500 text-[10px] font-bold uppercase">Active</span>
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase
+                              ${car.status === "Pending" && "bg-yellow-500/10 text-yellow-400"}
+${car.status === "Approved" && "bg-green-500/10 text-green-500"}
+${car.status === "Rejected" && "bg-red-500/10 text-red-400"}
+${car.status === "Sold" && "bg-blue-500/10 text-blue-400"}
+                     `}>
+                        {car.status}
+                      </span>
                     </td>
                     <td className="p-6">
                       <div className="flex justify-end gap-3">
+                        <Link to={`/seller/add-inspection/${car._id}`}>
+                          <button className="p-2 text-gray-500 hover:text-blue-400 transition" title="Add Inspection Report">
+                            <ClipboardCheck size={18} />
+                          </button>
+                        </Link>
                         <Link to={`/vehicle/${car._id}`}>
                           <button className="p-2 text-gray-500 hover:text-white transition"><Eye size={18} /></button>
                         </Link>
-                        <Link to={`/vehicle/edit/${car._id}`}>
+                        <Link to={`/seller/edit-vehicle/${car._id}`}>
                           <button className="p-2 text-gray-500 hover:text-[#D4AF37] transition"><Edit3 size={18} /></button>
                         </Link>
-                        <button 
+                        <button
                           onClick={() => handleDelete(car._id)}
                           className="p-2 text-gray-500 hover:text-red-500 transition"
                         >
                           <Trash2 size={18} />
                         </button>
+                        {car.status === "Draft" && (
+                          <button
+                            onClick={() => handlePublish(car._id)}
+                            className="p-2 text-gray-500 hover:text-green-400 transition"
+                            title="Publish to Marketplace"
+                          >
+                            🚀
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -200,4 +220,4 @@ const StatBox = ({ icon, label, count }) => (
   </div>
 );
 
-export default SellerDashboard;
+export default SellerDashboard; 

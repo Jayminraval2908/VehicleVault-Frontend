@@ -3,7 +3,7 @@ import offerService from "../../services/offerService";
 import Button from "../../components/common/Button";
 import Loader from "../../components/common/Loader";
 import Card from "../../components/common/Card";
-import { DollarSign, Trash2, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Trash2, Clock, CheckCircle, XCircle, IndianRupeeIcon } from "lucide-react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
@@ -11,22 +11,21 @@ const MyOffers = () => {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const navigate = useNavigate
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchOffers = async () => {
+    const fetchMyOffers = async () => {
       try {
-        const user = JSON.parse(localStorage.getItem("user"));
-        const data = await offerService.getBuyerOffers(user._id);
-        // Assuming backend returns { message, data: [...] }
-        setOffers(data.data || []);
+        const res = await offerService.getBuyerOffers();
+        // 🚩 Your controller returns { data: offers }, so access it correctly
+        setOffers(res.data || res);
       } catch (err) {
-        console.error("Offer Fetch Error:", err);
+        toast.error("Could not load your offers.");
       } finally {
         setLoading(false);
       }
     };
-    fetchOffers();
+    fetchMyOffers();
   }, []);
 
   const handleCancelOffer = async (id) => {
@@ -74,14 +73,14 @@ const MyOffers = () => {
                 <Card key={offer._id} className="flex flex-col md:flex-row justify-between items-center gap-6">
                   <div className="flex items-center gap-6">
                     <div className="bg-[#D4AF37] p-4 rounded-2xl text-black">
-                      <DollarSign size={32} />
+                      <IndianRupeeIcon size={32} />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-gray-100">
-                        ${offer.amount?.toLocaleString()}
+                        Rs. {offer.offered_amount?.toLocaleString() || "0"}
                       </h3>
                       <p className="text-sm text-gray-500 font-mono">ID: #{offer._id.slice(-8)}</p>
-                      
+
                       <div className={`mt-3 inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest ${status.bg} ${status.color}`}>
                         {status.icon} {offer.status || "Pending"}
                       </div>
@@ -89,19 +88,28 @@ const MyOffers = () => {
                   </div>
 
                   <div className="flex gap-4 w-full md:w-auto">
-                    {offer.status === "pending" && (
-                      <Button 
-                        variant="danger" 
+                    {offer.status?.toLowerCase() === "pending" && (
+                      <Button
+                        variant="danger"
                         onClick={() => handleCancelOffer(offer._id)}
                         className="flex-1 md:flex-none flex items-center gap-2 px-6"
                       >
                         <Trash2 size={16} /> WITHDRAW
                       </Button>
                     )}
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="flex-1 md:flex-none"
-                      onClick={() => navigate(`/vehicle/${offer.vehicle_id?._id || offer.vehicle_id}`)}
+                      onClick={() => {
+                        // 🚩 Logic: Determine if it's an object or just a string
+                        const vId = offer.vehicle_id?._id || offer.vehicle_id;
+
+                        if (vId) {
+                          navigate(`/vehicle/${vId}`);
+                        } else {
+                          toast.error("Vehicle details are unavailable");
+                        }
+                      }}
                     >
                       VIEW VEHICLE
                     </Button>

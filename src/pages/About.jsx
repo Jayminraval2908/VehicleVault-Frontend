@@ -8,9 +8,9 @@ export default function About() {
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1, 
-      transition: { staggerChildren: 0.3 } 
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.3 }
     }
   };
 
@@ -22,13 +22,13 @@ export default function About() {
   return (
     <div className="min-h-screen bg-[#0D0D0D] text-white selection:bg-[#D4AF37] selection:text-black">
       {/* Hero Section */}
-      <motion.div 
+      <motion.div
         initial="hidden"
         animate="visible"
         variants={containerVariants}
         className="max-w-6xl mx-auto px-8 pt-32 pb-20"
       >
-        <motion.h1 
+        <motion.h1
           variants={itemVariants}
           className="text-5xl md:text-7xl font-bold text-[#D4AF37] mb-8"
         >
@@ -48,17 +48,17 @@ export default function About() {
             </Button>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             variants={itemVariants}
             className="relative h-[400px] bg-gray-900 rounded-lg overflow-hidden border border-white/10"
           >
-            <img 
-              src="https://media.istockphoto.com/id/1366606754/photo/new-cars-at-dealer-showroom.jpg?s=2048x2048&w=is&k=20&c=UmeAevF532JVsBxaHUzEiDjoIr2_UX-Uh0K4P1nUTjg=" 
+            <img
+              src="https://media.istockphoto.com/id/1366606754/photo/new-cars-at-dealer-showroom.jpg?s=2048x2048&w=is&k=20&c=UmeAevF532JVsBxaHUzEiDjoIr2_UX-Uh0K4P1nUTjg="
               alt="Luxury Showroom"
               className="object-cover w-full h-full opacity-60 hover:scale-105 transition-transform duration-700"
             />
           </motion.div>
-        </div>  
+        </div>
       </motion.div>
     </div>
   );

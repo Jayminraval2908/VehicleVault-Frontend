@@ -1,82 +1,14 @@
-// import React from "react";
-// import { NavLink } from "react-router-dom";
-// import { FaCar, FaUsers, FaChartLine, FaDollarSign, FaEnvelope } from "react-icons/fa";
-
-// const Sidebar = ({ role, isOpen }) => {
-
-//   const menus = {
-//     buyer: [
-//       { name: "Dashboard", path: "/buyer", icon: <FaChartLine /> },
-//       { name: "Browse Cars", path: "/browse", icon: <FaCar /> },
-//       { name: "Saved Cars", path: "/saved", icon: <FaDollarSign /> },
-//       { name: "Messages", path: "/messages", icon: <FaEnvelope /> },
-//     ],
-
-//     seller: [
-//       { name: "Dashboard", path: "/seller", icon: <FaChartLine /> },
-//       { name: "Add Car", path: "/add-car", icon: <FaCar /> },
-//       { name: "My Listings", path: "/my-listings", icon: <FaDollarSign /> },
-//       { name: "Inquiries", path: "/inquiries", icon: <FaEnvelope /> },
-//     ],
-
-//     admin: [
-//       { name: "Dashboard", path: "/admin", icon: <FaChartLine /> },
-//       { name: "Users", path: "/users", icon: <FaUsers /> },
-//       { name: "Listings", path: "/listings", icon: <FaCar /> },
-//       { name: "Reports", path: "/reports", icon: <FaDollarSign /> },
-//     ]
-//   };
-
-//   const menu = menus[role] || [];
-
-//   return (
-//     <aside
-//       className={`bg-gray-900 text-yellow-400 w-64 min-h-screen pt-24 px-4 fixed md:relative
-//       shadow-xl transition-transform duration-300
-//       ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
-//     >
-
-//       {/* Logo */}
-//       <div className="absolute top-6 left-4 text-2xl font-bold tracking-wider">
-//         Vehicle Vault
-//       </div>
-
-//       {/* Menu */}
-//       {menu.map((item, index) => (
-//         <NavLink
-//           key={index}
-//           to={item.path}
-//           className={({ isActive }) =>
-//             `flex items-center gap-3 px-4 py-3 rounded-lg mb-2 transition-all duration-300
-//             ${isActive
-//               ? "bg-yellow-500 text-gray-900 font-semibold"
-//               : "hover:bg-yellow-500 hover:text-gray-900"}`
-//           }
-//         >
-//           <span className="text-lg">{item.icon}</span>
-//           <span>{item.name}</span>
-//         </NavLink>
-//       ))}
-
-//     </aside>
-//   );
-// };
-
-// export default Sidebar;
-
-
-
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  CarFront, 
-  MessageSquare, 
-  DollarSign, 
-  Calendar, 
-  PlusCircle, 
-  ShieldCheck, 
-  Users 
+import {
+  LayoutDashboard,
+  CarFront,
+  MessageSquare,
+  DollarSign,
+  Calendar,
+  PlusCircle,
+  ShieldCheck,
+  Users
 } from "lucide-react";
 
 const Sidebar = ({ role, isOpen, onClose }) => {
@@ -109,17 +41,16 @@ const Sidebar = ({ role, isOpen, onClose }) => {
     <>
       {/* Mobile Overlay Background */}
       {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 md:hidden" 
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 md:hidden"
           onClick={onClose}
         />
       )}
 
       {/* Sidebar Container */}
       <aside
-        className={`bg-[#111111] border-r border-gray-800 w-64 min-h-screen fixed top-0 left-0 z-50 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0 ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`bg-[#111111] border-r border-gray-800 w-64 min-h-screen fixed top-0 left-0 z-50 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         {/* Branding / Logo */}
         <div className="h-20 flex items-center justify-center border-b border-gray-800 bg-[#0D0D0D]">
@@ -133,17 +64,16 @@ const Sidebar = ({ role, isOpen, onClose }) => {
           <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-2 px-4">
             {role} Menu
           </p>
-          
+
           {menu.map((item, index) => (
             <NavLink
               key={index}
               to={item.path}
               onClick={onClose} // Closes sidebar on mobile after clicking a link
               className={({ isActive }) =>
-                `flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 font-medium ${
-                  isActive
-                    ? "bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 shadow-lg"
-                    : "text-gray-500 hover:bg-white/[0.02] hover:text-white border border-transparent"
+                `flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 font-medium ${isActive
+                  ? "bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 shadow-lg"
+                  : "text-gray-500 hover:bg-white/[0.02] hover:text-white border border-transparent"
                 }`
               }
             >

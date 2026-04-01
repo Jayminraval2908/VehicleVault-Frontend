@@ -1,27 +1,40 @@
 import API from "./api";
 
 const offerService = {
-  // POST: Send a new price offer
-  sendOffer: async (offerData) => {
-    const response = await API.post("/transactions/create", offerData);
+  // Matches OfferController.createOffer (POST /offer/create)
+  createOffer: async (offerData) => {
+    const response = await API.post("/offer/create", offerData);
     return response.data;
   },
 
-  // GET: Fetch offers for a specific buyer
-  getBuyerOffers: async (buyerId) => {
-    const response = await API.get(`/transactions/buyer/${buyerId}`);
+  // Matches OfferController.getVehicleOffers (GET /offer/vehicle/:vehicleId)
+  getVehicleOffers: async (vehicleId) => {
+    const response = await API.get(`/offer/vehicle/${vehicleId}`);
     return response.data;
   },
 
-  // GET: Fetch offer by ID
+  // Matches OfferController.getBuyerOffers (GET /offer/my-offers)
+  // Ensure your backend route for this is router.get("/my-offers", ...)
+  getBuyerOffers: async () => {
+    const response = await API.get("/offer/my-offers");
+    return response.data.data || response.data;
+  },
+
+  // Matches OfferController.getOfferById (GET /offer/:id)
   getOfferById: async (id) => {
-    const response = await API.get(`/transactions/${id}`);
+    const response = await API.get(`/offer/${id}`);
     return response.data;
   },
 
-  // DELETE: Cancel/Remove an offer
+  // Matches OfferController.deleteOffer (DELETE /offer/:id)
   deleteOffer: async (id) => {
-    const response = await API.delete(`/transactions/${id}`);
+    const response = await API.delete(`/offer/${id}`);
+    return response.data;
+  },
+
+  // Added: Update Offer Status (Accept/Reject)
+  updateOfferStatus: async (id, statusData) => {
+    const response = await API.put(`/offer/${id}`, statusData);
     return response.data;
   }
 };

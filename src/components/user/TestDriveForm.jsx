@@ -15,20 +15,20 @@ export default function TestDriveForm({ onSubmit, loading }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
-        <Input 
-          label="Preferred Date" 
+        <Input
+          label="Preferred Date"
           type="date"
-          min={new Date().toISOString().split("T")[0]} 
-          value={date} 
-          onChange={(e) => setDate(e.target.value)} 
-          required 
+          min={new Date().toISOString().split("T")[0]}
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          required
         />
-        <Input 
-          label="Preferred Time" 
-          type="time" 
-          value={time} 
-          onChange={(e) => setTime(e.target.value)} 
-          required 
+        <Input
+          label="Preferred Time"
+          type="time"
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+          required
         />
       </div>
       <div className="bg-[#0D0D0D] p-3 rounded-xl border border-gray-800">

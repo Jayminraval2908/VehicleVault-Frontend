@@ -18,14 +18,13 @@ export default function OfferCard({ offer, onCancel }) {
       </div>
 
       <div className="text-right">
-        <div className={`flex items-center gap-1 text-[10px] font-black uppercase px-2 py-1 rounded-md mb-2 ${
-          offer.status === 'accepted' ? 'text-green-500 bg-green-500/10' : 'text-[#D4AF37] bg-[#D4AF37]/10'
-        }`}>
+        <div className={`flex items-center gap-1 text-[10px] font-black uppercase px-2 py-1 rounded-md mb-2 ${offer.status === 'accepted' ? 'text-green-500 bg-green-500/10' : 'text-[#D4AF37] bg-[#D4AF37]/10'
+          }`}>
           {isPending ? <Clock size={12} /> : <TrendingUp size={12} />}
           {offer.status}
         </div>
         {isPending && (
-          <button 
+          <button
             onClick={() => onCancel(offer._id)}
             className="text-[10px] text-red-500 hover:underline uppercase font-bold"
           >
