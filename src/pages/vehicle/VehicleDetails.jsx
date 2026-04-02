@@ -193,4 +193,4 @@ const SpecBox = ({ icon, label, value }) => (
   </div>
 );
 
-export default VehicleDetails;
+export default VehicleDetails;  

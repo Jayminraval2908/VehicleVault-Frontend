@@ -39,11 +39,12 @@ const MyBookings = () => {
   const handleCancel = async (id) => {
     if (window.confirm("Do you wish to cancel this scheduled test drive?")) {
       try {
-        await testDriveService.deleteBooking(id); // Matches your controller deleteBooking
+        await testDriveService.cancelBooking(id); // Matches your controller deleteBooking
         setBookings(bookings.filter((b) => b._id !== id));
         toast.success("Booking cancelled successfully");
       } catch (err) {
-        toast.error("Cancellation failed.");
+        console.error("Cancellation Error:", err.response?.data || err.message);
+        toast.error(err.response?.data?.message||"Cancellation failed.");
       }
     }
   };
@@ -69,6 +70,7 @@ const MyBookings = () => {
           <div className="grid gap-6">
             {bookings.map((booking) => {
               const bookingDate = booking.preferred_date ? new Date(booking.preferred_date) : null;
+               const status = booking.status?.toLowerCase();
               
               return (
                 <Card key={booking._id} className="group relative overflow-hidden bg-[#111111]/40 hover:border-[#D4AF37]/30 transition-all duration-300">
@@ -92,6 +94,7 @@ const MyBookings = () => {
                             ? `${booking.vehicle_id?.make} ${booking.vehicle_id?.model}`
                             : "Premium Vehicle"}
                         </h3>
+                        
 
                         <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-gray-400">
                           <span className="flex items-center gap-1 font-medium">
@@ -110,24 +113,40 @@ const MyBookings = () => {
                             REF: #{(booking.vehicle_id?._id || booking.vehicle_id || "000000").slice(-6)}
                           </span>
                         </div>
+
+                        {/* ✅ STATUS BADGE */}
+                        <div
+                          className={`mt-2 inline-flex px-3 py-1 rounded-full text-xs font-bold uppercase
+                          ${
+                            status === "Approved"
+                              ? "bg-green-500/10 text-green-500"
+                              : status === "Rejected"
+                              ? "bg-red-500/10 text-red-500"
+                              : "bg-[#D4AF37]/10 text-[#D4AF37]"
+                          }`}
+                        >
+                          {status}
+                        </div>
                       </div>
                     </div>
 
                     <div className="flex gap-3 w-full md:w-auto">
                       <Button
                         variant="outline"
-                        onClick={() => navigate(`/buyer/testdrives/${booking._id}`)}
+                        onClick={() => navigate(`/buyer/bookings/${booking._id}`)}
                         className="flex-1 md:flex-none text-xs font-black tracking-widest"
                       >
                         DETAILS
                       </Button>
-                      <Button
-                        variant="danger"
-                        onClick={() => handleCancel(booking._id)}
-                        className="flex-1 md:flex-none p-3 group-hover:bg-red-600 transition-colors"
-                      >
-                        <Trash2 size={18} />
-                      </Button>
+                     {status === "Pending" && (
+                        <Button
+                          variant="danger"
+                          onClick={() => handleCancel(booking._id)}
+                          className="flex-1 md:flex-none p-3 group-hover:bg-red-600 transition-colors"
+                        >
+                          <Trash2 size={18} />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </Card>

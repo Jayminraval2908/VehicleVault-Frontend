@@ -28,6 +28,9 @@ import TestDriveDetails from "../pages/testdrive/TestDriveDetails";
 import ForgotPassword from "../pages/auth/ForgotPassword";
 import ResetPassword from "../pages/auth/ResetPassword";
 import AdminUsers from "../pages/dashboard/AdminUsers";
+import SellerInquiries from "../pages/inquiry/SellerInquiries";
+import SellerOffers from "../pages/offer/SellerOffers";
+import SellerTestDrives from "../pages/testdrive/SellerTestDrive";
 
 const router = createBrowserRouter([
   // --- Public Routes ---
@@ -100,6 +103,9 @@ const router = createBrowserRouter([
       { path: "add-vehicle", element: <AddVehicle /> },
       { path: "edit-vehicle/:id", element: <EditVehicle /> },
       { path: "add-inspection/:vehicleId", element: <AddReport /> },
+      { path: "inquiries", element:<SellerInquiries/>},
+      { path: "offers", element:<SellerOffers/>},
+      { path: "test-drives", element : <SellerTestDrives/>}
     ],
   },
 

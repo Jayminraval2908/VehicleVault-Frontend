@@ -86,10 +86,6 @@ const Navbar = ({ toggleSidebar, role }) => {
                 <p className="text-sm font-bold text-[#D4AF37] truncate">{user?.email || "Encrypted"}</p>
               </div>
 
-              <button className="flex items-center gap-3 w-full text-left px-4 py-3 hover:bg-white/5 rounded-xl transition text-sm text-gray-300">
-                <Shield size={16} className="text-gray-500" />
-                Security Settings
-              </button>
 
               <button
                 onClick={handleLogout}

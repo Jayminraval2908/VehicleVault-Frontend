@@ -29,7 +29,12 @@ const testDriveService = {
   cancelBooking: async (id) => {
     const response = await API.delete(`/testdrives/${id}`);
     return response.data;
-  }
+  },
+
+  getSellerBookings: async () => {
+  const response = await API.get("/testdrives/seller");
+  return response.data.data || response.data;
+},
 };
 
 export default testDriveService;

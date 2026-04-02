@@ -18,12 +18,12 @@ const MyInquiries = () => {
           toast.warn("Please login to view your inquiries");
           return;
         }
-        
+
         const user = JSON.parse(storedUser);
         const userId = user._id || user.id;
-        
+
         const response = await inquiryService.getInquiriesByBuyer(userId);
-        
+
         // Handle potential nested data structure from Axios
         const data = response.data?.data || response.data || [];
         setInquiries(Array.isArray(data) ? data : []);
@@ -67,8 +67,8 @@ const MyInquiries = () => {
         ) : (
           <div className="grid gap-4">
             {inquiries.map((iq) => (
-              <div 
-                key={iq._id} 
+              <div
+                key={iq._id}
                 className="bg-[#111111] border border-gray-800 p-6 rounded-2xl flex justify-between items-center hover:border-[#D4AF37]/50 transition"
               >
                 <div className="flex items-center gap-4">
@@ -82,6 +82,25 @@ const MyInquiries = () => {
                     <p className="text-sm text-gray-500 truncate max-w-md italic">
                       "{iq.message}"
                     </p>
+                    {/* ✅ STATUS */}
+                    <p className="text-xs mt-2">
+                      Status:{" "}
+                      <span
+                        className={`font-semibold ${iq.status === "Pending"
+                          ? "text-yellow-400"
+                          : iq.status === "Accepted"
+                            ? "text-green-400"
+                            : "text-red-400"
+                          }`}
+                      >
+                        {iq.status}
+                      </span>
+                    </p>
+                    {iq.reply && (
+                      <p className="text-sm mt-2 text-green-400 bg-green-500/10 px-3 py-2 rounded-lg border border-green-500/20">
+                        <strong>Seller Reply:</strong> {iq.reply}
+                      </p>
+                    )}
                     <p className="text-[10px] text-gray-600 uppercase mt-1">
                       Sent on: {iq.createdAt ? new Date(iq.createdAt).toLocaleDateString() : 'N/A'}
                     </p>
@@ -94,8 +113,8 @@ const MyInquiries = () => {
                       <ExternalLink size={16} /> View Car
                     </Button>
                   </Link>
-                  <Button 
-                    variant="danger" 
+                  <Button
+                    variant="danger"
                     onClick={() => handleDelete(iq._id)}
                     className="p-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-lg transition"
                   >

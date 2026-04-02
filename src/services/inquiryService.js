@@ -52,6 +52,29 @@ const inquiryService = {
   const response = await API.get("/inquiries/my-inquiries");
   return response.data.data || response.data;
 },
+
+getSellerInquiries: async () => {
+    const response = await API.get("/inquiries/seller");
+    return response.data.data || response.data;
+  },
+
+  replyToInquiry: async (id, message) => {
+  const token = localStorage.getItem("token");
+
+  const response = await API.put(
+    `/inquiries/reply/${id}`,
+    { message },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+},
 };
+
+
 
 export default inquiryService;

@@ -8,8 +8,10 @@ import {
   Calendar,
   PlusCircle,
   ShieldCheck,
-  Users
+  Users,
+  IndianRupeeIcon
 } from "lucide-react";
+import { path } from "framer-motion/m";
 
 const Sidebar = ({ role, isOpen, onClose }) => {
 
@@ -26,6 +28,10 @@ const Sidebar = ({ role, isOpen, onClose }) => {
       { name: "Dashboard", path: "/seller/dashboard", icon: <LayoutDashboard size={20} /> },
       { name: "Add Listing", path: "/seller/add-vehicle", icon: <PlusCircle size={20} /> },
       { name: "View Market", path: "/vehicles", icon: <CarFront size={20} /> },
+      { name: "Inquiries", path: "/seller/inquiries", icon: <MessageSquare size={20} /> },
+      { name: "Offers" , path:"/seller/offers", icon: <IndianRupeeIcon size={20}/> },
+      { name: "Test Drives", path: "/seller/test-drives", icon: <Calendar size={20} /> } 
+
     ],
 
     admin: [

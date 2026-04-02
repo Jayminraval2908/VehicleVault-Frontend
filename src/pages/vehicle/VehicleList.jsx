@@ -75,7 +75,7 @@ const VehicleList = () => {
                 {/* Price Tag Overlay */}
                 <div className="absolute bottom-4 left-4">
                   <span className="text-2xl font-black text-[#D4AF37]">
-                    ${car.price?.toLocaleString('en-IN')}
+                    Rs.{car.price?.toLocaleString('en-IN')}
                   </span>
                 </div>
               </div>

@@ -36,7 +36,14 @@ const offerService = {
   updateOfferStatus: async (id, statusData) => {
     const response = await API.put(`/offer/${id}`, statusData);
     return response.data;
-  }
+  },
+
+  getSellerOffers: async () => {
+  const response = await API.get("/offer/seller");
+  return response.data.data || response.data;
+},
+
+
 };
 
 export default offerService;
