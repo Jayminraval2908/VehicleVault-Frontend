@@ -1,5 +1,6 @@
 import API from "./api";
 
+
 const offerService = {
   // Matches OfferController.createOffer (POST /offer/create)
   createOffer: async (offerData) => {
@@ -42,6 +43,10 @@ const offerService = {
   const response = await API.get("/offer/seller");
   return response.data.data || response.data;
 },
+
+confirmDeal: (id) => {
+  return API.put(`/offer/confirm/${id}`);
+}
 
 
 };

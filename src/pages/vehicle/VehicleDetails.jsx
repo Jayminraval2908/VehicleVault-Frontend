@@ -14,7 +14,8 @@ import {
   ClipboardCheck,
   CarFront,
   Edit3,
-  IndianRupeeIcon
+  IndianRupeeIcon,
+  PlusCircle
 } from "lucide-react";
 
 const VehicleDetails = () => {
@@ -25,11 +26,12 @@ const VehicleDetails = () => {
 
   // 🚩 ROLE CHECK: Normalizing IDs to handle both _id and id
   const user = JSON.parse(localStorage.getItem("user"));
-  const currentUserId = user?.id || user?._id;
-  const vehicleSellerId = vehicle?.seller_id?._id || vehicle?.seller_id;
+  const currentUserId = (user?.id || user?._id)?.toString();
+  const vehicleSellerId = (vehicle?.seller_id?._id || vehicle?.seller_id)?.toString();
 
-  const isOwner = currentUserId === vehicleSellerId;
+  const isOwner = currentUserId && vehicleSellerId && currentUserId === vehicleSellerId;
   const isBuyer = user?.role === "buyer";
+  
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -51,6 +53,7 @@ const VehicleDetails = () => {
 
   if (loading) return <Loader fullScreen />;
   if (!vehicle) return <div className="text-white text-center mt-20">Vehicle not found.</div>;
+
 
   return (
     <div className="min-h-screen bg-[#0D0D0D] text-white pb-20">
@@ -151,14 +154,24 @@ const VehicleDetails = () => {
 
               {/* 🚩 ROLE LOGIC: SELLER/OWNER ACTIONS */}
               {isOwner && (
-                <Link to={`/seller/edit-vehicle/${vehicle._id}`}>
-                  <Button
-                    variant="outline"
-                    className="w-full flex justify-center gap-3 py-4 border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all duration-300 font-bold tracking-widest"
-                  >
-                    <Edit3 size={18} /> EDIT LISTING
-                  </Button>
-                </Link>
+                <>
+                  <Link to={`/seller/add-inspection/${vehicle._id}`}>
+                    <Button
+                      className="w-full flex justify-center items-center gap-3 py-5 bg-[#D4AF37] text-black hover:bg-[#b8952e] transition-all duration-300 font-black tracking-[0.15em] uppercase text-xs shadow-xl shadow-[#D4AF37]/10"
+                    >
+                      <PlusCircle size={20} /> ADD INSPECTION REPORT
+                    </Button>
+                  </Link>
+
+                  <Link to={`/seller/edit-vehicle/${vehicle._id}`}>
+                    <Button
+                      variant="outline"
+                      className="w-full flex justify-center items-center gap-3 py-4 border-gray-800 text-gray-400 hover:text-white hover:border-gray-600 transition-all duration-300 font-bold tracking-widest uppercase text-[10px]"
+                    >
+                      <Edit3 size={16} /> EDIT LISTING DETAILS
+                    </Button>
+                  </Link>
+                </>
               )}
 
               {/* IF GUEST: PROMPT LOGIN */}

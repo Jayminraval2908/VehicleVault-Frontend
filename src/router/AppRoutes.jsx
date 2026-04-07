@@ -31,6 +31,8 @@ import AdminUsers from "../pages/dashboard/AdminUsers";
 import SellerInquiries from "../pages/inquiry/SellerInquiries";
 import SellerOffers from "../pages/offer/SellerOffers";
 import SellerTestDrives from "../pages/testdrive/SellerTestDrive";
+import MyGarage from "../pages/seller/MyGarage";
+import PendingVehicle from "../components/layout/PendingVehicle";
 
 const router = createBrowserRouter([
   // --- Public Routes ---
@@ -100,6 +102,7 @@ const router = createBrowserRouter([
     ),
     children: [
       { path: "dashboard", element: <SellerDashboard /> },
+      { path: "garage", element: <MyGarage/>},
       { path: "add-vehicle", element: <AddVehicle /> },
       { path: "edit-vehicle/:id", element: <EditVehicle /> },
       { path: "add-inspection/:vehicleId", element: <AddReport /> },
@@ -119,7 +122,8 @@ const router = createBrowserRouter([
     ),
     children: [
       { path: "dashboard", element: <AdminDashboard /> },
-      { path: "users", element: <AdminUsers /> }
+      { path: "users", element: <AdminUsers /> },
+      { path: "pending-vehicles", element:<PendingVehicle/>}
     ],
   },
 

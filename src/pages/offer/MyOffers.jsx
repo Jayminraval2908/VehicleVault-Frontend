@@ -7,9 +7,11 @@ import { Trash2, Clock, CheckCircle, XCircle, IndianRupeeIcon } from "lucide-rea
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
+
 const MyOffers = () => {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
+
 
   const navigate = useNavigate();
 
@@ -37,6 +39,24 @@ const MyOffers = () => {
       } catch (err) {
         toast.error("Failed to withdraw offer");
       }
+    }
+  };
+
+
+  const handleConfirmDeal = async (id) => {
+    try {
+      const res = await offerService.confirmDeal(id);
+
+      const updatedOffer = res.data.data;
+
+      setOffers((prev) =>
+        prev.map((o) => (o._id === id ? updatedOffer : o))
+      );
+
+      toast.success("Deal confirmation sent");
+    } catch (err) {
+      console.log("❌ ERROR:", err.response?.data || err.message);
+      toast.error("Failed to confirm deal");
     }
   };
 
@@ -84,6 +104,19 @@ const MyOffers = () => {
                       <div className={`mt-3 inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest ${status.bg} ${status.color}`}>
                         {status.icon} {offer.status || "Pending"}
                       </div>
+                      {offer.dealStatus === "deal_locked" && (
+                        <div className="mt-2 text-green-400 text-sm font-semibold">
+                          🔒 Deal Confirmed
+                        </div>
+                      )}
+
+                      {offer.dealStatus === "deal_locked" && (
+                        <div className="mt-3 p-3 bg-green-900/20 border border-green-700 rounded">
+                          <p className="text-green-400 font-semibold">📞 Seller Contact</p>
+                          <p className="text-sm">Phone: {offer.seller_id?.phone}</p>
+                          <p className="text-sm">Email: {offer.seller_id?.email}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -113,6 +146,18 @@ const MyOffers = () => {
                     >
                       VIEW VEHICLE
                     </Button>
+                    {/* ✅ CONFIRM DEAL BUTTON */}
+                    {offer.dealStatus === "offer_accepted" && (
+                      <Button
+                        variant="primary"
+                        onClick={() => handleConfirmDeal(offer._id)}
+                        className="flex-1 md:flex-none"
+                        disabled={offer.buyerConfirmed}
+                      >
+                        {offer.buyerConfirmed ? "Waiting for Seller..." : "Confirm Deal"}
+                      </Button>
+                    )}
+
                   </div>
                 </Card>
               );
@@ -120,6 +165,7 @@ const MyOffers = () => {
           </div>
         )}
       </div>
+
     </div>
   );
 };
