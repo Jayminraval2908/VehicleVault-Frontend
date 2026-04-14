@@ -118,3 +118,7 @@ const SellerInquiries = () => {
 
 
 export default SellerInquiries;
+
+
+
+

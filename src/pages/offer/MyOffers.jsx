@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 const MyOffers = () => {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [messageText, setMessageText] = useState("");
 
 
   const navigate = useNavigate();
@@ -53,10 +54,11 @@ const MyOffers = () => {
         prev.map((o) => (o._id === id ? updatedOffer : o))
       );
 
-      toast.success("Deal confirmation sent");
+
+      toast.success(res.data.message || "Deal confirmation updated");
     } catch (err) {
       console.log("❌ ERROR:", err.response?.data || err.message);
-      toast.error("Failed to confirm deal");
+      toast.error(err.response?.data?.message || "Failed to confirm deal");
     }
   };
 
@@ -113,8 +115,14 @@ const MyOffers = () => {
                       {offer.dealStatus === "deal_locked" && (
                         <div className="mt-3 p-3 bg-green-900/20 border border-green-700 rounded">
                           <p className="text-green-400 font-semibold">📞 Seller Contact</p>
-                          <p className="text-sm">Phone: {offer.seller_id?.phone}</p>
-                          <p className="text-sm">Email: {offer.seller_id?.email}</p>
+                          <p className="text-sm">Phone: {offer.seller_id?.phone || "N/A"}</p>
+                          <p className="text-sm">Email: {offer.seller_id?.email || "N/A"}</p>
+                        </div>
+                      )}
+
+                      {offer.buyerConfirmed && offer.dealStatus !== "deal_locked" && (
+                        <div className="mt-2 text-blue-400 text-sm font-semibold">
+                          ⏳ Waiting for Seller Confirmation...
                         </div>
                       )}
                     </div>
@@ -147,14 +155,13 @@ const MyOffers = () => {
                       VIEW VEHICLE
                     </Button>
                     {/* ✅ CONFIRM DEAL BUTTON */}
-                    {offer.dealStatus === "offer_accepted" && (
+                    {offer.dealStatus === "offer_accepted" && !offer.buyerConfirmed && (
                       <Button
                         variant="primary"
                         onClick={() => handleConfirmDeal(offer._id)}
                         className="flex-1 md:flex-none"
-                        disabled={offer.buyerConfirmed}
                       >
-                        {offer.buyerConfirmed ? "Waiting for Seller..." : "Confirm Deal"}
+                        Confirm Deal
                       </Button>
                     )}
 
@@ -171,3 +178,9 @@ const MyOffers = () => {
 };
 
 export default MyOffers;
+
+
+
+
+
+

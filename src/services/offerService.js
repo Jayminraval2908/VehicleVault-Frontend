@@ -46,7 +46,9 @@ const offerService = {
 
 confirmDeal: (id) => {
   return API.put(`/offer/confirm/${id}`);
-}
+},
+
+
 
 
 };

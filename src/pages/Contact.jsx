@@ -1,10 +1,9 @@
-import React from "react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
+import api from "../services/api"; // ✅ IMPORTANT: adjust path if needed
 
 export default function Contact() {
-  // 1. Initialize useForm
   const {
     register,
     handleSubmit,
@@ -18,19 +17,28 @@ export default function Contact() {
     },
   });
 
-  // 2. Define the Submit Handler
+  // ✅ UPDATED SUBMIT FUNCTION
   const onSubmit = async (data) => {
     try {
-      // Replace this with your actual API call to your backend/EmailJS/etc.
-      console.log("Form Data:", data);
+      const res = await api.post("/contact", data);
 
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      toast.success("Message sent! Our concierge will contact you shortly.");
-      reset(); // Clear form after success
+      if (res.data.success) {
+        toast.success("Message sent! Our concierge will contact you shortly.");
+        reset();
+      } else {
+        toast.error(res.data.message || "Something went wrong");
+      }
     } catch (error) {
-      toast.error("Failed to send message. Please try again.");
+      console.error("Contact Error:", error);
+
+      // Better error handling 🔥
+      if (error.response) {
+        toast.error(error.response.data.message || "Server error");
+      } else if (error.request) {
+        toast.error("Server not responding");
+      } else {
+        toast.error("Something went wrong");
+      }
     }
   };
 
@@ -70,6 +78,7 @@ export default function Contact() {
 
         {/* Form Section */}
         <form onSubmit={handleSubmit(onSubmit)} className="p-12 space-y-6">
+          
           {/* Full Name */}
           <div>
             <label className="block text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2">
@@ -78,16 +87,19 @@ export default function Contact() {
             <input
               {...register("fullName", { required: "Name is required" })}
               type="text"
-              className={`w-full bg-white/5 border ${errors.fullName ? "border-red-500" : "border-white/10"
-                } rounded-lg px-4 py-3 focus:outline-none focus:border-[#D4AF37] transition-all`}
+              className={`w-full bg-white/5 border ${
+                errors.fullName ? "border-red-500" : "border-white/10"
+              } rounded-lg px-4 py-3 focus:outline-none focus:border-[#D4AF37]`}
               placeholder="John Doe"
             />
             {errors.fullName && (
-              <p className="text-red-500 text-[10px] mt-1 uppercase">{errors.fullName.message}</p>
+              <p className="text-red-500 text-[10px] mt-1 uppercase">
+                {errors.fullName.message}
+              </p>
             )}
           </div>
 
-          {/* Email Address */}
+          {/* Email */}
           <div>
             <label className="block text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2">
               Email Address
@@ -101,12 +113,15 @@ export default function Contact() {
                 },
               })}
               type="email"
-              className={`w-full bg-white/5 border ${errors.email ? "border-red-500" : "border-white/10"
-                } rounded-lg px-4 py-3 focus:outline-none focus:border-[#D4AF37] transition-all`}
+              className={`w-full bg-white/5 border ${
+                errors.email ? "border-red-500" : "border-white/10"
+              } rounded-lg px-4 py-3 focus:outline-none focus:border-[#D4AF37]`}
               placeholder="john@example.com"
             />
             {errors.email && (
-              <p className="text-red-500 text-[10px] mt-1 uppercase">{errors.email.message}</p>
+              <p className="text-red-500 text-[10px] mt-1 uppercase">
+                {errors.email.message}
+              </p>
             )}
           </div>
 
@@ -118,28 +133,32 @@ export default function Contact() {
             <textarea
               {...register("message", {
                 required: "Please enter a message",
-                minLength: { value: 10, message: "Message too short" }
+                minLength: { value: 10, message: "Message too short" },
               })}
               rows="4"
-              className={`w-full bg-white/5 border ${errors.message ? "border-red-500" : "border-white/10"
-                } rounded-lg px-4 py-3 focus:outline-none focus:border-[#D4AF37] transition-all resize-none`}
+              className={`w-full bg-white/5 border ${
+                errors.message ? "border-red-500" : "border-white/10"
+              } rounded-lg px-4 py-3 focus:outline-none focus:border-[#D4AF37]`}
               placeholder="Tell us about your requirements..."
             ></textarea>
             {errors.message && (
-              <p className="text-red-500 text-[10px] mt-1 uppercase">{errors.message.message}</p>
+              <p className="text-red-500 text-[10px] mt-1 uppercase">
+                {errors.message.message}
+              </p>
             )}
           </div>
 
-          {/* Submit Button */}
+          {/* Submit */}
           <motion.button
             disabled={isSubmitting}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             type="submit"
-            className="w-full bg-[#D4AF37] disabled:bg-gray-600 text-black font-bold py-4 rounded-lg uppercase tracking-widest hover:bg-[#b8972f] transition-all shadow-lg"
+            className="w-full bg-[#D4AF37] disabled:bg-gray-600 text-black font-bold py-4 rounded-lg uppercase tracking-widest hover:bg-[#b8972f] transition-all"
           >
             {isSubmitting ? "Sending..." : "Send Message"}
           </motion.button>
+
         </form>
       </motion.div>
     </div>

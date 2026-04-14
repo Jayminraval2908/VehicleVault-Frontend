@@ -9,11 +9,13 @@ import { Fuel, Gauge, Eye, ArrowUpRight } from "lucide-react";
 const VehicleList = () => {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search,setSearch]= useState("");
+
 
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
-        const data = await vehicleService.getAllVehicles();
+        const data = await vehicleService.getAllVehicles(search);
 
         // ✅ only approved vehicles visible in marketplace
         const approvedVehicles = data.filter(
@@ -29,12 +31,23 @@ const VehicleList = () => {
       }
     };
     fetchVehicles();
-  }, []);
+  }, [search]);
 
   if (loading) return <Loader fullScreen />;
 
   return (
     <div className="min-h-screen bg-[#0D0D0D] p-8">
+       {/* 🔍 SEARCH BAR */}
+      <div className="max-w-7xl mx-auto mb-6">
+        <input
+          type="text"
+          placeholder="Search by brand, model..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full md:w-1/3 px-4 py-3 rounded-xl bg-[#111] border border-gray-800 text-white focus:outline-none focus:border-[#D4AF37]"
+        />
+      </div>
+      
       {/* SECTION HEADER */}
       <div className="max-w-7xl mx-auto mb-12 flex flex-col md:flex-row justify-between items-end gap-4">
         <div>

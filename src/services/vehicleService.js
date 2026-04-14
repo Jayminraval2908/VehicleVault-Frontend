@@ -2,8 +2,8 @@ import { header } from "framer-motion/m";
 import API from "./api";
 
 const vehicleService = {
-  getAllVehicles: async () => {
-    const response = await API.get("/vehicles");
+  getAllVehicles: async (search = "") => {
+    const response = await API.get(`/vehicles?search=${search}`);
     return response.data.data;
   },
 

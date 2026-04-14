@@ -8,7 +8,7 @@ function App() {
   const [count, setCount] = useState(0)
   
   // Set the base URL for all axios requests
-  axios.defaults.baseURL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+  axios.defaults.baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   return (
     // 2. Wrap everything in the GoogleOAuthProvider

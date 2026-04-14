@@ -265,7 +265,7 @@ export default function Signup() {
 
   const navigate = useNavigate();
   const selectedRole = watch("role");
-  const contact = watch("contact"); // watch contact field for Google login
+  const contact = watch("phone"); // watch contact field for Google login
 
   // --- Role Selection ---
   const handleRoleSelect = (role) => {
@@ -304,7 +304,7 @@ export default function Signup() {
       const res = await axios.post("/user/google-signin", {
         token: credentialResponse.credential,
         role: selectedRole,
-        contact: contact // send contact along with Google token
+        phone: contact // send contact along with Google token
       });
 
       toast.success("Welcome to the Vault!");
@@ -381,7 +381,7 @@ navigate("/login"); // Or "/login" depending on your route
                 type="text"
                 placeholder="Contact Number"
                 className="w-full p-4 bg-black/50 rounded-xl border border-gray-800 text-white text-sm focus:border-amber-500 outline-none transition-all"
-                {...register("contact", {
+                {...register("phone", {
                   required: "Contact is required",
                   pattern: { value: /^[0-9]{10}$/, message: "Enter a valid 10-digit number" },
                 })}

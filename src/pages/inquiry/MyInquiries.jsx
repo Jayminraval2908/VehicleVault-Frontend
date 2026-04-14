@@ -43,7 +43,6 @@ const MyInquiries = () => {
       try {
         await inquiryService.deleteInquiry(id);
         setInquiries(prev => prev.filter((iq) => iq._id !== id));
-        // ✅ Using toastify success
         toast.success("Inquiry successfully removed!");
       } catch (err) {
         toast.error("Failed to delete inquiry. Please try again.");
@@ -55,68 +54,76 @@ const MyInquiries = () => {
 
   return (
     <div className="p-8 bg-[#0D0D0D] min-h-screen text-white">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-4xl font-black mb-10 uppercase tracking-tighter">
           My <span className="text-[#D4AF37]">Inquiries</span>
         </h1>
 
         {inquiries.length === 0 ? (
-          <div className="border border-dashed border-gray-800 p-20 text-center rounded-2xl text-gray-500">
+          <div className="border border-dashed border-gray-800 p-20 text-center rounded-3xl text-gray-500 bg-[#111111]/30">
             No active inquiries found in your vault.
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-6">
             {inquiries.map((iq) => (
               <div
                 key={iq._id}
-                className="bg-[#111111] border border-gray-800 p-6 rounded-2xl flex justify-between items-center hover:border-[#D4AF37]/50 transition"
+                className="bg-[#111111] border border-gray-800 p-6 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 hover:border-[#D4AF37]/40 transition-all group relative overflow-hidden"
               >
-                <div className="flex items-center gap-4">
-                  <div className="bg-[#D4AF37]/10 p-3 rounded-xl">
+                <div className="flex items-start gap-5 flex-1">
+                  <div className="bg-[#D4AF37]/10 p-4 rounded-xl shrink-0">
                     <MessageCircle className="text-[#D4AF37]" size={24} />
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-200">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xl font-bold text-gray-100 uppercase tracking-tight">
                       {iq.vehicle_id?.make ? `${iq.vehicle_id.make} ${iq.vehicle_id.model}` : `Vehicle #${iq.vehicle_id?._id?.slice(-6) || 'Unknown'}`}
                     </h3>
-                    <p className="text-sm text-gray-500 truncate max-w-md italic">
+                    
+                    <p className="text-sm text-gray-500 italic mt-1 line-clamp-2 leading-relaxed">
                       "{iq.message}"
                     </p>
-                    {/* ✅ STATUS */}
-                    <p className="text-xs mt-2">
-                      Status:{" "}
-                      <span
-                        className={`font-semibold ${iq.status === "Pending"
-                          ? "text-yellow-400"
-                          : iq.status === "Accepted"
-                            ? "text-green-400"
-                            : "text-red-400"
-                          }`}
-                      >
-                        {iq.status}
+
+                    <div className="flex items-center gap-4 mt-3">
+                      <div className="flex items-center gap-2">
+                         <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">Status</span>
+                         <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${
+                            iq.status === "Pending" ? "bg-yellow-500/10 text-yellow-500" : 
+                            iq.status === "Accepted" ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+                          }`}>
+                            {iq.status}
+                          </span>
+                      </div>
+                      <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+                        Sent: {iq.createdAt ? new Date(iq.createdAt).toLocaleDateString() : 'N/A'}
                       </span>
-                    </p>
+                    </div>
+
                     {iq.reply && (
-                      <p className="text-sm mt-2 text-green-400 bg-green-500/10 px-3 py-2 rounded-lg border border-green-500/20">
-                        <strong>Seller Reply:</strong> {iq.reply}
-                      </p>
+                      <div className="mt-5 bg-green-500/5 border border-green-500/20 p-4 rounded-xl relative">
+                        <span className="absolute -top-2 left-3 px-2 bg-[#111] text-green-500 text-[9px] font-black uppercase tracking-widest">
+                          Official Reply
+                        </span>
+                        {/* Scrollable reply area for long text */}
+                        <div className="max-h-32 overflow-y-auto pr-2 custom-scrollbar">
+                           <p className="text-sm text-gray-300 leading-relaxed italic">
+                             {iq.reply}
+                           </p>
+                        </div>
+                      </div>
                     )}
-                    <p className="text-[10px] text-gray-600 uppercase mt-1">
-                      Sent on: {iq.createdAt ? new Date(iq.createdAt).toLocaleDateString() : 'N/A'}
-                    </p>
                   </div>
                 </div>
 
-                <div className="flex gap-2">
-                  <Link to={`/vehicle/${iq.vehicle_id?._id || iq.vehicle_id}`}>
-                    <Button variant="outline" className="flex items-center gap-2">
-                      <ExternalLink size={16} /> View Car
+                <div className="flex flex-row md:flex-col lg:flex-row gap-3 w-full md:w-auto shrink-0 border-t md:border-t-0 border-gray-800 pt-4 md:pt-0">
+                  <Link to={`/vehicle/${iq.vehicle_id?._id || iq.vehicle_id}`} className="flex-1">
+                    <Button variant="outline" className="w-full flex items-center justify-center gap-2 border-gray-700 text-xs font-bold uppercase tracking-widest py-3">
+                      <ExternalLink size={14} /> View Car
                     </Button>
                   </Link>
                   <Button
                     variant="danger"
                     onClick={() => handleDelete(iq._id)}
-                    className="p-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-lg transition"
+                    className="flex-1 md:flex-none p-3 bg-red-500/10 hover:bg-red-600 text-red-500 hover:text-white rounded-xl transition-all flex items-center justify-center"
                   >
                     <Trash2 size={16} />
                   </Button>

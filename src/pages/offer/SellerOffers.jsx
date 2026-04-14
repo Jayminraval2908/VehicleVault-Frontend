@@ -2,16 +2,11 @@ import React, { useEffect, useState } from "react";
 import offerService from "../../services/offerService";
 import Loader from "../../components/common/Loader";
 import { toast } from "react-toastify";
-import { CheckCircle, XCircle, IndianRupeeIcon } from "lucide-react";
-
+import { CheckCircle, XCircle, IndianRupeeIcon, Lock } from "lucide-react";
 
 const SellerOffers = () => {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const [selectedOffer, setSelectedOffer] = useState(null);
-  const [responseMessage, setResponseMessage] = useState("");
-
 
   useEffect(() => {
     fetchOffers();
@@ -30,163 +25,172 @@ const SellerOffers = () => {
 
   const handleUpdate = async (id, status) => {
     try {
+      // Logic: Removed responseMessage state, sending status directly
+      const autoResponse = status === "Accepted" 
+        ? "I accept your offer. Let's proceed with the deal." 
+        : "I cannot accept this offer at this time.";
+
       await offerService.updateOfferStatus(id, {
         status,
-        seller_response: responseMessage
+        seller_response: autoResponse
       });
 
       toast.success(`Offer ${status}`);
-      setSelectedOffer(null);
-      setResponseMessage("");
       fetchOffers();
     } catch (err) {
       toast.error("Failed to update offer");
     }
   };
 
+  // const handleConfirmDeal = async (id) => {
+  //   try {
+  //     const res = await offerService.confirmDeal(id);
+  //     const updatedOffer = res.data.data;
+
+  //     setOffers((prev) =>
+  //       prev.map((o) => (o._id === id ? updatedOffer : o))
+  //     );
+
+  //     toast.success(res.data.message || "Deal updated");
+  //   } catch (err) {
+  //     toast.error(err.response?.data?.message || "Failed to confirm deal");
+  //   }
+  // };
+
   const handleConfirmDeal = async (id) => {
-    try {
-      const res = await offerService.confirmDeal(id);
+  try {
+    const res = await offerService.confirmDeal(id);
 
-      const updatedOffer = res.data.data;
+    // 🚩 The fix is here:
+    // We merge the new data (dealStatus, etc.) with the old data (populated buyer info)
+    const updatedDataFromServer = res.data.data;
 
-      setOffers((prev) =>
-        prev.map((o) => (o._id === id ? updatedOffer : o))
-      );
+    setOffers((prev) =>
+      prev.map((o) => 
+        o._id === id 
+          ? { ...o, ...updatedDataFromServer } // Keep existing populated fields like buyer_id
+          : o
+      )
+    );
 
-      toast.success("Deal confirmation sent");
-    } catch (err) {
-      toast.error("Failed to confirm deal");
-    }
-  };
+    toast.success(res.data.message || "Deal updated");
+  } catch (err) {
+    toast.error(err.response?.data?.message || "Failed to confirm deal");
+  }
+};
 
   if (loading) return <Loader fullScreen />;
 
   return (
-    <div className="p-6 text-white">
-      <h1 className="text-2xl font-bold mb-6 text-[#D4AF37]">
-        Seller Offers
-      </h1>
+    <div className="p-8 bg-[#0D0D0D] min-h-screen text-white">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-3xl font-black mb-10 text-[#D4AF37] uppercase tracking-tighter">
+          Seller <span className="text-white">Offers</span>
+        </h1>
 
-      {offers.length === 0 ? (
-        <p className="text-gray-400">No offers yet</p>
-      ) : (
-        <div className="space-y-4">
-          {offers.map((offer) => (
-            <div
-              key={offer._id}
-              className="p-4 border border-gray-800 rounded-lg bg-[#111]"
-            >
-              <p className="text-sm text-gray-400">
-                Vehicle: {offer.vehicle_id?.make} {offer.vehicle_id?.model}
-              </p>
-
-              <p className="text-sm text-gray-400">
-                Buyer: {offer.buyer_id?.name}
-              </p>
-
-              <p className="mt-2 text-white flex items-center gap-2">
-                <IndianRupeeIcon size={16} />
-                Offer: ₹{offer.offered_amount}
-              </p>
-
-              {/* STATUS */}
-              <p className="mt-2 text-sm">
-                Status:{" "}
-                <span
-                  className={`${offer.status === "Accepted"
-                    ? "text-green-400"
-                    : offer.status === "Rejected"
-                      ? "text-red-400"
-                      : "text-yellow-400"
-                    }`}
-                >
-                  {offer.status}
-                </span>
-                {offer.dealStatus === "deal_locked" && (
-                  <p className="mt-2 text-green-400 font-semibold">
-                    🔒 Deal Confirmed
-                  </p>
-                )}
-
-                {offer.dealStatus === "deal_locked" && (
-                  <div className="mt-3 p-3 bg-green-900/20 border border-green-700 rounded">
-                    <p className="text-green-400 font-semibold">📞 Buyer Contact</p>
-                    <p className="text-sm">Phone: {offer.buyer_id?.phone}</p>
-                    <p className="text-sm">Email: {offer.buyer_id?.email}</p>
+        {offers.length === 0 ? (
+          <div className="border border-dashed border-gray-800 p-20 text-center rounded-2xl text-gray-500 bg-[#111]/30">
+            No offers received in your vault yet.
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {offers.map((offer) => (
+              <div
+                key={offer._id}
+                className="p-6 border border-gray-800 rounded-2xl bg-[#111] hover:border-[#D4AF37]/30 transition-all shadow-2xl"
+              >
+                {/* Header Information */}
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-100 uppercase tracking-tight">
+                      {offer.vehicle_id?.make} {offer.vehicle_id?.model}
+                    </h3>
+                    <p className="text-xs text-[#D4AF37] font-bold uppercase tracking-widest mt-1">
+                      Buyer: {offer.buyer_id?.name}
+                    </p>
                   </div>
-                )}
-              </p>
-              {/* ✅ CONFIRM DEAL BUTTON (SELLER) */}
-              {offer.dealStatus === "offer_accepted" && (
-                <div className="mt-3">
-                  <button
-                    onClick={() => handleConfirmDeal(offer._id)}
-                    disabled={offer.sellerConfirmed}
-                    className={`px-4 py-2 rounded ${offer.sellerConfirmed
-                      ? "bg-gray-600 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700"
-                      }`}
-                  >
-                    {offer.sellerConfirmed ? "Waiting for Buyer..." : "Confirm Deal"}
-                  </button>
+                  <span className={`text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full ${
+                    offer.status === 'Accepted' ? 'bg-green-500/10 text-green-500' : 
+                    offer.status === 'Rejected' ? 'bg-red-500/10 text-red-500' : 'bg-yellow-500/10 text-yellow-500'
+                  }`}>
+                    {offer.status}
+                  </span>
                 </div>
-              )}
 
-              {/* SELLER RESPONSE */}
-              {offer.seller_response && (
-                <p className="mt-2 text-green-400">
-                  Response: {offer.seller_response}
-                </p>
-              )}
-
-              {/* ACTION BUTTONS */}
-              {offer.status === "Pending" && (
-                <>
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      onClick={() => setSelectedOffer(offer._id)}
-                      className="px-3 py-1 bg-[#D4AF37] text-black rounded"
-                    >
-                      Respond
-                    </button>
+                {/* Offer Amount Display */}
+                <div className="bg-black/40 p-5 rounded-2xl border border-gray-800/50 mb-6 flex items-center gap-3">
+                  <div className="bg-[#D4AF37]/10 p-2 rounded-lg text-[#D4AF37]">
+                    <IndianRupeeIcon size={20} />
                   </div>
+                  <div>
+                    <p className="text-[9px] text-gray-600 font-black uppercase tracking-widest">Offered Amount</p>
+                    <p className="text-2xl font-black text-white">₹{offer.offered_amount.toLocaleString()}</p>
+                  </div>
+                </div>
 
-                  {selectedOffer === offer._id && (
-                    <div className="mt-3">
-                      <textarea
-                        value={responseMessage}
-                        onChange={(e) => setResponseMessage(e.target.value)}
-                        placeholder="Write response..."
-                        className="w-full p-2 rounded bg-black border border-gray-700"
-                      />
-
-                      <div className="flex gap-2 mt-2">
-                        <button
-                          onClick={() => handleUpdate(offer._id, "Accepted")}
-                          className="px-4 py-1 bg-green-600 rounded flex items-center gap-1"
-                        >
-                          <CheckCircle size={16} /> Accept
-                        </button>
-
-                        <button
-                          onClick={() => handleUpdate(offer._id, "Rejected")}
-                          className="px-4 py-1 bg-red-600 rounded flex items-center gap-1"
-                        >
-                          <XCircle size={16} /> Reject
-                        </button>
-
+                {/* Deal Confirmation Section */}
+                {offer.dealStatus === "deal_locked" && (
+                  <div className="mb-6 p-5 bg-green-950/20 border border-green-500/20 rounded-2xl ">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Lock size={16} className="text-green-500" />
+                      <p className="text-green-500 text-xs font-black uppercase tracking-widest">Deal Confirmed & Locked</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-[9px] text-gray-500 uppercase font-bold">Buyer Phone</p>
+                        <p className="text-sm font-medium">{offer.buyer_id?.phone || 'Not Shared'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] text-gray-500 uppercase font-bold">Buyer Email</p>
+                        <p className="text-sm font-medium">{offer.buyer_id?.email}</p>
                       </div>
                     </div>
-                  )}
-                </>
-              )}
-            </div>
-          ))}
-        </div>
+                  </div>
+                )}
 
-      )}
+                {/* Actions: Accept/Reject (Only for Pending) */}
+                {offer.status === "Pending" && (
+                  <div className="flex gap-4 pt-4 border-t border-gray-800">
+                    <button
+                      onClick={() => handleUpdate(offer._id, "Accepted")}
+                      className="flex-1 bg-green-600/10 hover:bg-green-600 text-green-500 hover:text-white border border-green-600/20 font-bold py-4 rounded-xl flex items-center justify-center gap-3 transition-all uppercase text-xs tracking-widest"
+                    >
+                      <CheckCircle size={18} /> Accept Offer
+                    </button>
+                    <button
+                      onClick={() => handleUpdate(offer._id, "Rejected")}
+                      className="flex-1 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white border border-red-600/20 font-bold py-4 rounded-xl flex items-center justify-center gap-3 transition-all uppercase text-xs tracking-widest"
+                    >
+                      <XCircle size={18} /> Reject
+                    </button>
+                  </div>
+                )}
 
+                {/* Final Confirmation Button (After acceptance) */}
+                {offer.dealStatus === "offer_accepted" && (
+                  <div className="mt-4 pt-4 border-t border-gray-800">
+                    <button
+                      onClick={() => handleConfirmDeal(offer._id)}
+                      disabled={!offer.buyerConfirmed || offer.sellerConfirmed}
+                      className={`w-full py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all ${
+                        !offer.buyerConfirmed 
+                          ? "bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700" 
+                          : "bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-900/20"
+                      }`}
+                    >
+                      {!offer.buyerConfirmed
+                        ? "Waiting for Buyer Confirmation..."
+                        : offer.sellerConfirmed
+                          ? "Deal Fully Confirmed"
+                          : "Click to Confirm Final Deal"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
