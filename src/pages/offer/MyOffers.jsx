@@ -7,12 +7,9 @@ import { Trash2, Clock, CheckCircle, XCircle, IndianRupeeIcon } from "lucide-rea
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
-
 const MyOffers = () => {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [messageText, setMessageText] = useState("");
-
 
   const navigate = useNavigate();
 
@@ -20,9 +17,8 @@ const MyOffers = () => {
     const fetchMyOffers = async () => {
       try {
         const res = await offerService.getBuyerOffers();
-        // 🚩 Your controller returns { data: offers }, so access it correctly
         setOffers(res.data || res);
-      } catch (err) {
+      } catch {
         toast.error("Could not load your offers.");
       } finally {
         setLoading(false);
@@ -32,32 +28,28 @@ const MyOffers = () => {
   }, []);
 
   const handleCancelOffer = async (id) => {
-    if (window.confirm("Are you sure you want to withdraw this bid?")) {
+    if (window.confirm("Withdraw this offer?")) {
       try {
         await offerService.deleteOffer(id);
-        setOffers(offers.filter((o) => o._id !== id));
-        toast.success("Offer withdrawn successfully");
-      } catch (err) {
+        setOffers((prev) => prev.filter((o) => o._id !== id));
+        toast.success("Offer withdrawn");
+      } catch {
         toast.error("Failed to withdraw offer");
       }
     }
   };
 
-
   const handleConfirmDeal = async (id) => {
     try {
       const res = await offerService.confirmDeal(id);
-
       const updatedOffer = res.data.data;
 
       setOffers((prev) =>
         prev.map((o) => (o._id === id ? updatedOffer : o))
       );
 
-
-      toast.success(res.data.message || "Deal confirmation updated");
+      toast.success("Deal confirmed");
     } catch (err) {
-      console.log("❌ ERROR:", err.response?.data || err.message);
       toast.error(err.response?.data?.message || "Failed to confirm deal");
     }
   };
@@ -65,101 +57,128 @@ const MyOffers = () => {
   const getStatusStyle = (status) => {
     switch (status?.toLowerCase()) {
       case "accepted":
-        return { color: "text-green-500", icon: <CheckCircle size={16} />, bg: "bg-green-500/10" };
+        return { color: "text-green-500", icon: <CheckCircle size={14} />, bg: "bg-green-500/10" };
       case "rejected":
-        return { color: "text-red-500", icon: <XCircle size={16} />, bg: "bg-red-500/10" };
+        return { color: "text-red-500", icon: <XCircle size={14} />, bg: "bg-red-500/10" };
       default:
-        return { color: "text-[#D4AF37]", icon: <Clock size={16} />, bg: "bg-[#D4AF37]/10" };
+        return { color: "text-[#D4AF37]", icon: <Clock size={14} />, bg: "bg-[#D4AF37]/10" };
     }
   };
 
   if (loading) return <Loader fullScreen />;
 
   return (
-    <div className="p-8 bg-[#0D0D0D] min-h-screen text-white">
+    <div className="px-4 sm:px-6 md:px-8 py-6 bg-[#0D0D0D] min-h-screen text-white">
+      
+      {/* HEADER */}
       <div className="max-w-5xl mx-auto">
-        <header className="mb-12">
-          <h1 className="text-4xl font-bold mb-2">My <span className="text-[#D4AF37]">Bids & Offers</span></h1>
-          <p className="text-gray-500">Track your negotiations for premium vehicles.</p>
+        <header className="mb-8 sm:mb-12">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
+            My <span className="text-[#D4AF37]">Bids & Offers</span>
+          </h1>
+          <p className="text-gray-500 text-sm sm:text-base">
+            Track your negotiations for premium vehicles.
+          </p>
         </header>
 
+        {/* EMPTY STATE */}
         {offers.length === 0 ? (
-          <div className="text-center py-20 border border-dashed border-gray-800 rounded-3xl">
-            <p className="text-gray-600 italic">No offers placed yet. Time to find your next ride!</p>
+          <div className="text-center py-16 border border-dashed border-gray-800 rounded-2xl">
+            <p className="text-gray-600 italic text-sm">
+              No offers placed yet. Time to find your next ride!
+            </p>
           </div>
         ) : (
-          <div className="grid gap-6">
+          <div className="space-y-5">
             {offers.map((offer) => {
               const status = getStatusStyle(offer.status);
-              return (
-                <Card key={offer._id} className="flex flex-col md:flex-row justify-between items-center gap-6">
-                  <div className="flex items-center gap-6">
-                    <div className="bg-[#D4AF37] p-4 rounded-2xl text-black">
-                      <IndianRupeeIcon size={32} />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-100">
-                        Rs. {offer.offered_amount?.toLocaleString() || "0"}
-                      </h3>
-                      <p className="text-sm text-gray-500 font-mono">ID: #{offer._id.slice(-8)}</p>
 
-                      <div className={`mt-3 inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest ${status.bg} ${status.color}`}>
+              return (
+                <Card
+                  key={offer._id}
+                  className="flex flex-col gap-5 p-4 sm:p-6"
+                >
+
+                  {/* TOP SECTION */}
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+
+                    {/* ICON */}
+                    <div className="bg-[#D4AF37] p-3 sm:p-4 rounded-xl text-black w-fit">
+                      <IndianRupeeIcon size={24} />
+                    </div>
+
+                    {/* DETAILS */}
+                    <div className="flex-1">
+                      <h3 className="text-lg sm:text-xl font-bold">
+                        ₹ {offer.offered_amount?.toLocaleString() || "0"}
+                      </h3>
+
+                      <p className="text-xs text-gray-500">
+                        ID: #{offer._id.slice(-6)}
+                      </p>
+
+                      {/* STATUS */}
+                      <div className={`mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold ${status.bg} ${status.color}`}>
                         {status.icon} {offer.status || "Pending"}
                       </div>
-                      {offer.dealStatus === "deal_locked" && (
-                        <div className="mt-2 text-green-400 text-sm font-semibold">
-                          🔒 Deal Confirmed
-                        </div>
-                      )}
 
+                      {/* DEAL STATES */}
                       {offer.dealStatus === "deal_locked" && (
-                        <div className="mt-3 p-3 bg-green-900/20 border border-green-700 rounded">
-                          <p className="text-green-400 font-semibold">📞 Seller Contact</p>
-                          <p className="text-sm">Phone: {offer.seller_id?.phone || "N/A"}</p>
-                          <p className="text-sm">Email: {offer.seller_id?.email || "N/A"}</p>
-                        </div>
+                        <p className="mt-2 text-green-400 text-xs sm:text-sm">
+                          🔒 Deal Confirmed
+                        </p>
                       )}
 
                       {offer.buyerConfirmed && offer.dealStatus !== "deal_locked" && (
-                        <div className="mt-2 text-blue-400 text-sm font-semibold">
-                          ⏳ Waiting for Seller Confirmation...
-                        </div>
+                        <p className="mt-2 text-blue-400 text-xs sm:text-sm">
+                          ⏳ Waiting for Seller...
+                        </p>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex gap-4 w-full md:w-auto">
+                  {/* CONTACT */}
+                  {offer.dealStatus === "deal_locked" && (
+                    <div className="bg-green-900/20 border border-green-700 p-3 rounded-lg text-sm">
+                      <p className="text-green-400 font-semibold mb-1">Seller Contact</p>
+                      <p className="text-xs">📞 {offer.seller_id?.phone || "N/A"}</p>
+                      <p className="text-xs">✉️ {offer.seller_id?.email || "N/A"}</p>
+                    </div>
+                  )}
+
+                  {/* ACTION BUTTONS */}
+                  <div className="flex flex-col sm:flex-row gap-3">
+
+                    {/* WITHDRAW */}
                     {offer.status?.toLowerCase() === "pending" && (
                       <Button
                         variant="danger"
                         onClick={() => handleCancelOffer(offer._id)}
-                        className="flex-1 md:flex-none flex items-center gap-2 px-6"
+                        className="w-full sm:w-auto flex items-center justify-center gap-2"
                       >
-                        <Trash2 size={16} /> WITHDRAW
+                        <Trash2 size={14} /> Withdraw
                       </Button>
                     )}
+
+                    {/* VIEW */}
                     <Button
                       variant="outline"
-                      className="flex-1 md:flex-none"
+                      className="w-full sm:w-auto"
                       onClick={() => {
-                        // 🚩 Logic: Determine if it's an object or just a string
                         const vId = offer.vehicle_id?._id || offer.vehicle_id;
-
-                        if (vId) {
-                          navigate(`/vehicle/${vId}`);
-                        } else {
-                          toast.error("Vehicle details are unavailable");
-                        }
+                        if (vId) navigate(`/vehicle/${vId}`);
+                        else toast.error("Vehicle not found");
                       }}
                     >
-                      VIEW VEHICLE
+                      View Vehicle
                     </Button>
-                    {/* ✅ CONFIRM DEAL BUTTON */}
+
+                    {/* CONFIRM DEAL */}
                     {offer.dealStatus === "offer_accepted" && !offer.buyerConfirmed && (
                       <Button
                         variant="primary"
+                        className="w-full sm:w-auto"
                         onClick={() => handleConfirmDeal(offer._id)}
-                        className="flex-1 md:flex-none"
                       >
                         Confirm Deal
                       </Button>
@@ -172,15 +191,8 @@ const MyOffers = () => {
           </div>
         )}
       </div>
-
     </div>
   );
 };
 
 export default MyOffers;
-
-
-
-
-
-
