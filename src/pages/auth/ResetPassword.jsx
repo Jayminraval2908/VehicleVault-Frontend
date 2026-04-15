@@ -7,6 +7,9 @@ import Card from "../../components/common/Card";
 import Input from "../../components/common/Input";
 import Button from "../../components/common/Button";
 
+// ✅ use your axios instance
+import api from "../../services/api";
+
 const ResetPassword = () => {
   const { token } = useParams();
   const navigate = useNavigate();
@@ -26,20 +29,12 @@ const ResetPassword = () => {
     setLoading(true);
 
     try {
-      const res = await fetch(
-        `http://localhost:3000/user/resetpassword/${token}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ newPassword }),
-        }
-      );
+      // ✅ FIXED: use api instead of fetch + localhost
+      const res = await api.post(`/user/resetpassword/${token}`, {
+        newPassword,
+      });
 
-      const data = await res.json();
-
-      toast.success(data.message);
+      toast.success(res.data.message);
 
       // ✅ redirect after success
       setTimeout(() => {
@@ -48,7 +43,9 @@ const ResetPassword = () => {
 
     } catch (err) {
       console.log(err);
-      toast.error("Error resetting password");
+      toast.error(
+        err.response?.data?.message || "Error resetting password"
+      );
     } finally {
       setLoading(false);
     }
@@ -72,7 +69,6 @@ const ResetPassword = () => {
         {/* FORM */}
         <form onSubmit={handleReset} className="space-y-5">
 
-          {/* NEW PASSWORD */}
           <Input
             label="New Password"
             type="password"
@@ -81,7 +77,6 @@ const ResetPassword = () => {
             onChange={(e) => setNewPassword(e.target.value)}
           />
 
-          {/* CONFIRM PASSWORD */}
           <Input
             label="Confirm Password"
             type="password"
@@ -90,7 +85,6 @@ const ResetPassword = () => {
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
 
-          {/* BUTTON */}
           <Button
             type="submit"
             variant="primary"

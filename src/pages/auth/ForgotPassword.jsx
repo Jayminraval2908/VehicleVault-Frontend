@@ -1,42 +1,42 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
-import { Loader2 } from "lucide-react"; // ✅ add this
-import { useNavigate } from "react-router-dom"; // ✅ add this
+import { Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
+
+// ✅ import your axios instance
+import api from '../../services/api'; 
 
 const ForgotPassword = () => {
 
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
 
-    const navigate = useNavigate(); // ✅ add this
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true); // ✅ start loading
+        setLoading(true);
 
         try {
-            const res = await fetch("http://localhost:3000/user/forgotpassword", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ email }),
+            // ✅ use api instead of fetch + localhost
+            const res = await api.post("/user/forgotpassword", {
+                email
             });
 
-            const data = await res.json();
-
-            toast.success(data.message);
+            toast.success(res.data.message);
             setEmail("");
 
         } catch (err) {
             console.log(err);
-            toast.error("Something went wrong");
+            toast.error(
+                err.response?.data?.message || "Something went wrong"
+            );
         } finally {
-            setLoading(false); // ✅ stop loading
+            setLoading(false);
         }
     };
 
@@ -66,7 +66,6 @@ const ForgotPassword = () => {
                         onChange={(e) => setEmail(e.target.value)}
                     />
 
-                    {/* ✅ BUTTON FIXED */}
                     <Button
                         type="submit"
                         variant="primary"
