@@ -103,10 +103,10 @@ npm or yarn
 
 
 ## Clone the Frontend repository
-git clone https://github.com/your-username/vehicle-vault.git
+git clone https://github.com/Jayminraval2908/VehicleVault-Frontend.git
 
 ## Clone the Backend repository
-git clone https://github.com/your-username/vehicle-vault.git
+git clone https://github.com/Jayminraval2908/VehicleVault-Backend.git
 
 ## Install backend dependencies
 cd vehicle-vault-backend
