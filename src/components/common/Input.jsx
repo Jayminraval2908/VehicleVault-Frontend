@@ -33,7 +33,7 @@ export default function Input({
           "focus:ring-1 focus:ring-[#D4AF37]",
           "transition-all duration-300",
           className
-        )}
+        )}  
       />
     </div>
   );

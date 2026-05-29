@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // Initialize Auth State on Load
-  useEffect(() => {
+  useEffect(() => { 
     const storedUser = localStorage.getItem("user");
     const storedToken = localStorage.getItem("token");
 
