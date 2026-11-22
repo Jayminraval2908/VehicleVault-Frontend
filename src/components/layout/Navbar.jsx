@@ -1,95 +1,106 @@
 import React, { useState } from "react";
-import { Menu, User, LogOut, ChevronDown, Shield } from "lucide-react";
+import { Menu, User, LogOut, ChevronDown, LogIn } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Navbar = ({ toggleSidebar, role }) => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Get user data from localStorage
   const userString = localStorage.getItem("user");
   const user = userString ? JSON.parse(userString) : null;
   const isAuthenticated = !!localStorage.getItem("token");
 
   const handleLogout = () => {
-    localStorage.clear(); // Clears token, user, and role
+    localStorage.clear();
     setOpen(false);
     navigate("/login");
   };
 
   return (
-    <nav className="h-20 bg-[#0D0D0D]/80 backdrop-blur-xl border-b border-gray-800 px-6 flex items-center justify-between sticky top-0 z-40">
-
-      {/* Left Side: Role Indicator */}
+    <nav className="sticky top-0 z-40 flex h-20 items-center justify-between border-b border-white/10 bg-[#0A1628]/80 px-6 backdrop-blur-xl">
+      {/* Left */}
       <div className="flex items-center gap-4">
         <button
-          className="md:hidden text-gray-400 hover:text-[#D4AF37]"
+          className="text-[#8EA0B5] transition hover:text-[#2DD4BF] md:hidden"
           onClick={toggleSidebar}
         >
           <Menu size={24} />
         </button>
 
-        {/* Dynamic Role Badge */}
-        <div className="hidden sm:flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em]">
-          <span className="text-[#D4AF37] px-2 py-1 bg-[#D4AF37]/10 rounded border border-[#D4AF37]/20">
+        <div className="hidden items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] sm:flex">
+          <span className="rounded border border-[#2DD4BF]/20 bg-[#2DD4BF]/10 px-2 py-1 text-[#2DD4BF]">
             {role || user?.role || "Guest"}
           </span>
-          <span className="opacity-20 text-white">/</span>
+          <span className="text-white/20">/</span>
           <span className="text-white">
             {isAuthenticated ? "Live Session" : "Public Access"}
           </span>
         </div>
       </div>
 
-      {/* Right Side: Dynamic Name & Profile */}
-      {/* Right Side: Profile / Auth Actions */}
+      {/* Right */}
       <div className="relative">
         {isAuthenticated ? (
-          // --- Logged In View ---
           <button
             onClick={() => setOpen(!open)}
-            className="flex items-center gap-3 bg-[#111111] border border-gray-800 text-gray-200 px-4 py-2 rounded-xl hover:border-[#D4AF37]/50 transition-all shadow-lg"
+            className="flex items-center gap-3 rounded-xl border border-white/10 bg-[#102238] px-4 py-2 text-[#C8D3E0] shadow-lg transition hover:border-[#2DD4BF]/40"
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#D4AF37] to-[#fcf6ba] flex items-center justify-center text-black font-bold text-xs">
-              {user?.firstName ? user.firstName.charAt(0).toUpperCase() : <User size={16} />}
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-[#2DD4BF] to-[#3B82F6] text-xs font-bold text-[#0A1628]">
+              {user?.firstName ? (
+                user.firstName.charAt(0).toUpperCase()
+              ) : (
+                <User size={16} />
+              )}
             </div>
 
-            <div className="text-left hidden md:block">
-              <p className="text-[11px] font-black leading-none text-white uppercase">
-                {user?.firstName ? `${user.firstName} ${user.lastName || ''}` : "SECURE USER"}
+            <div className="hidden text-left md:block">
+              <p className="text-[11px] font-black uppercase leading-none text-white">
+                {user?.firstName
+                  ? `${user.firstName} ${user.lastName || ""}`
+                  : "SECURE USER"}
               </p>
-              <p className="text-[9px] text-gray-500 font-bold mt-1 uppercase tracking-tighter">
+              <p className="mt-1 text-[9px] font-bold uppercase tracking-tighter text-[#8EA0B5]">
                 Account Settings
               </p>
             </div>
 
-            <ChevronDown size={14} className={`text-gray-500 transition-transform ${open ? 'rotate-180' : ''}`} />
+            <ChevronDown
+              size={14}
+              className={`text-[#8EA0B5] transition-transform ${
+                open ? "rotate-180" : ""
+              }`}
+            />
           </button>
         ) : (
-          // --- Guest View (Login Button) ---
           <button
             onClick={() => navigate("/login")}
-            className="flex items-center gap-2 bg-[#D4AF37] text-black px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-[#fcf6ba] transition-all"
+            className="flex items-center gap-2 rounded-xl bg-[#2DD4BF] px-5 py-2 text-xs font-bold uppercase tracking-widest text-[#0A1628] transition hover:bg-[#2DD4BF]/90"
           >
             <LogIn size={16} />
             Authorize
           </button>
         )}
 
-        {/* Dropdown Menu */}
+        {/* Dropdown */}
         {open && isAuthenticated && (
           <>
-            <div className="fixed inset-0 z-10" onClick={() => setOpen(false)}></div>
-            <div className="absolute right-0 mt-3 w-56 bg-[#111111] border border-gray-800 shadow-2xl rounded-2xl p-2 z-20">
-              <div className="px-4 py-3 border-b border-gray-800 mb-2">
-                <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Active Identity</p>
-                <p className="text-sm font-bold text-[#D4AF37] truncate">{user?.email || "Encrypted"}</p>
+            <div
+              className="fixed inset-0 z-10"
+              onClick={() => setOpen(false)}
+            />
+            <div className="absolute right-0 z-20 mt-3 w-56 rounded-2xl border border-white/10 bg-[#102238] p-2 shadow-2xl">
+              <div className="mb-2 border-b border-white/10 px-4 py-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#8EA0B5]">
+                  Active Identity
+                </p>
+                <p className="truncate text-sm font-bold text-[#2DD4BF]">
+                  {user?.email || "Encrypted"}
+                </p>
               </div>
-
 
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-3 w-full text-left px-4 py-3 hover:bg-red-500/10 rounded-xl transition text-sm text-red-500 font-bold"
+                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-bold text-red-400 transition hover:bg-red-500/10"
               >
                 <LogOut size={16} />
                 Terminate Session

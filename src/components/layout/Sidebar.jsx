@@ -11,12 +11,11 @@ import {
   Users,
   IndianRupeeIcon,
   Warehouse,
-  Clock
+  Clock,
 } from "lucide-react";
+import { display } from "../../utils/theme";
 
-// 🚩 Added 'onOpenDrawer' prop to handle the sidebar click
 const Sidebar = ({ role, isOpen, onClose, pendingCount = 0, onOpenDrawer }) => {
-
   const menus = {
     buyer: [
       { name: "Dashboard", path: "/buyer/dashboard", icon: <LayoutDashboard size={20} /> },
@@ -25,84 +24,85 @@ const Sidebar = ({ role, isOpen, onClose, pendingCount = 0, onOpenDrawer }) => {
       { name: "Inquiries", path: "/buyer/inquiries", icon: <MessageSquare size={20} /> },
       { name: "Test Drives", path: "/buyer/bookings", icon: <Calendar size={20} /> },
     ],
-
     seller: [
       { name: "Dashboard", path: "/seller/dashboard", icon: <LayoutDashboard size={20} /> },
-      { name: "My Garage" , path :"/seller/garage", icon:<Warehouse  size={20}/> }, 
+      { name: "My Garage", path: "/seller/garage", icon: <Warehouse size={20} /> },
       { name: "Add Listing", path: "/seller/add-vehicle", icon: <PlusCircle size={20} /> },
       { name: "View Market", path: "/vehicles", icon: <CarFront size={20} /> },
       { name: "Inquiries", path: "/seller/inquiries", icon: <MessageSquare size={20} /> },
-      { name: "Offers" , path:"/seller/offers", icon: <IndianRupeeIcon size={20}/> },
-      { name: "Test Drives", path: "/seller/test-drives", icon: <Calendar size={20} /> } 
+      { name: "Offers", path: "/seller/offers", icon: <IndianRupeeIcon size={20} /> },
+      { name: "Test Drives", path: "/seller/test-drives", icon: <Calendar size={20} /> },
     ],
-
     admin: [
       { name: "System", path: "/admin/dashboard", icon: <ShieldCheck size={20} /> },
       { name: "Marketplace", path: "/vehicles", icon: <CarFront size={20} /> },
-      { name: "Pending Vehicles", path: "#", icon: <Clock size={20} /> }, // 🚩 Changed path to # for drawer
+      { name: "Pending Vehicles", path: "#", icon: <Clock size={20} /> },
       { name: "Members", path: "/admin/users", icon: <Users size={20} /> },
-    ]
+    ],
   };
 
   const menu = menus[role] || [];
 
   return (
     <>
-      {/* Mobile Overlay Background */}
+      {/* Mobile overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 md:hidden"
+          className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm md:hidden"
           onClick={onClose}
         />
       )}
 
-      {/* Sidebar Container */}
       <aside
-        className={`bg-[#111111] border-r border-gray-800 w-64 min-h-screen fixed top-0 left-0 z-50 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0 ${
+        className={`fixed left-0 top-0 z-50 flex min-h-screen w-64 flex-col border-r border-white/10 bg-[#0A1628] transition-transform duration-300 ease-in-out md:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="h-20 flex items-center justify-center border-b border-gray-800 bg-[#0D0D0D]">
-          <h1 className="text-xl font-black uppercase tracking-[0.2em] text-white">
-            Vehicle<span className="text-[#D4AF37]">Vault</span>
+        {/* Logo */}
+        <div className="flex h-20 items-center justify-center border-b border-white/10 bg-[#0D1D33]">
+          <h1
+            className="text-xl font-black uppercase tracking-[0.2em] text-white"
+            style={display}
+          >
+            Vehicle<span className="text-[#2DD4BF]">Vault</span>
           </h1>
         </div>
 
-        <div className="flex-1 py-8 px-4 flex flex-col gap-2 overflow-y-auto">
-          <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-2 px-4">
+        {/* Menu */}
+        <div className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-6">
+          <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-widest text-[#8EA0B5]">
             {role} Menu
           </p>
 
           {menu.map((item, index) => {
-            // 🚩 Logic to render a Button for Pending Vehicles instead of a Link
-            const isPendingItem = item.name === "Pending Vehicles" && role === "admin";
+            const isPendingItem =
+              item.name === "Pending Vehicles" && role === "admin";
 
-            const commonStyles = `flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 font-medium group w-full text-left`;
-            const activeStyles = `bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 shadow-lg`;
-            const inactiveStyles = `text-gray-500 hover:bg-white/[0.02] hover:text-white border border-transparent`;
+            const base =
+              "group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all duration-200";
 
             if (isPendingItem) {
               return (
                 <button
                   key={index}
                   onClick={() => {
-                    onOpenDrawer(); // Opens the PendingVehicleDrawer
-                    onClose();      // Closes sidebar on mobile
+                    onOpenDrawer();
+                    onClose();
                   }}
-                  className={`${commonStyles} ${inactiveStyles}`}
+                  className={`${base} border border-transparent text-[#8EA0B5] hover:bg-white/[0.04] hover:text-white`}
                 >
                   <div className="relative">
                     {item.icon}
                     {pendingCount > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500 border-2 border-[#111111]"></span>
+                      <span className="absolute -right-1 -top-1 flex h-3 w-3">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#2DD4BF] opacity-75" />
+                        <span className="relative inline-flex h-3 w-3 rounded-full border-2 border-[#0A1628] bg-[#2DD4BF]" />
                       </span>
                     )}
                   </div>
-                  <span className="text-sm tracking-wide flex-1">{item.name}</span>
+                  <span className="flex-1 tracking-wide">{item.name}</span>
                   {pendingCount > 0 && (
-                    <span className="text-[10px] font-bold bg-amber-500 text-black px-1.5 py-0.5 rounded-md">
+                    <span className="rounded-md bg-[#2DD4BF] px-1.5 py-0.5 text-[10px] font-bold text-[#0A1628]">
                       {pendingCount}
                     </span>
                   )}
@@ -116,20 +116,23 @@ const Sidebar = ({ role, isOpen, onClose, pendingCount = 0, onOpenDrawer }) => {
                 to={item.path}
                 onClick={onClose}
                 className={({ isActive }) =>
-                  `${commonStyles} ${isActive ? activeStyles : inactiveStyles}`
+                  `${base} ${
+                    isActive
+                      ? "border border-[#2DD4BF]/25 bg-[#2DD4BF]/10 text-[#2DD4BF] shadow-sm"
+                      : "border border-transparent text-[#8EA0B5] hover:bg-white/[0.04] hover:text-white"
+                  }`
                 }
               >
-                <div className="relative">
-                  {item.icon}
-                </div>
-                <span className="text-sm tracking-wide flex-1">{item.name}</span>
+                <div className="relative">{item.icon}</div>
+                <span className="flex-1 tracking-wide">{item.name}</span>
               </NavLink>
             );
           })}
         </div>
 
-        <div className="p-4 border-t border-gray-800 text-center">
-          <p className="text-xs text-gray-500 italic uppercase tracking-widest">
+        {/* Footer */}
+        <div className="border-t border-white/10 p-4 text-center">
+          <p className="text-[10px] uppercase tracking-widest text-[#8EA0B5]">
             Identity Verified
           </p>
         </div>

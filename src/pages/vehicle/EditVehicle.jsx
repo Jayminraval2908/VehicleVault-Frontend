@@ -1,20 +1,34 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { motion, useReducedMotion } from "framer-motion";
 import vehicleService from "../../services/vehicleService";
-import Button from "../../components/common/Button";
-import Input from "../../components/common/Input";
 import Loader from "../../components/common/Loader";
-import Card from "../../components/common/Card";
-import { Save, ArrowLeft, RefreshCw, X } from "lucide-react";
+import { display, body, mono, focusRing } from "../../utils/theme";
+import { ArrowLeft, Save, ShieldCheck, Car } from "lucide-react";
 import { toast } from "react-toastify";
+
+const fieldClass =
+  "w-full rounded-xl border border-white/15 bg-[#0A1628] px-4 py-3 text-sm text-white placeholder-[#8EA0B5] transition-colors focus:border-[#2DD4BF] focus:outline-none [color-scheme:dark]";
+
+const labelClass =
+  "mb-2 block text-xs font-medium uppercase tracking-wider text-[#8EA0B5]";
+
+const toDateInputValue = (rawDate) => {
+  if (!rawDate) return "";
+  const parsed = new Date(rawDate);
+  if (Number.isNaN(parsed.getTime())) {
+    return typeof rawDate === "string" ? rawDate.slice(0, 10) : "";
+  }
+  return parsed.toISOString().split("T")[0];
+};
 
 const EditVehicle = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const reduceMotion = useReducedMotion();
 
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
     make: "",
@@ -22,33 +36,43 @@ const EditVehicle = () => {
     year: "",
     price: "",
     mileage: "",
-    fuelType: "",
-    transmission: "",
+    fuel_type: "Petrol",
+    transmission: "Automatic",
+    owner_number: "1st Owner",
+    rto_code: "",
+    insurance_type: "Comprehensive",
+    insurance_validity: "",
     description: "",
-    images: []
   });
 
   useEffect(() => {
     const fetchVehicle = async () => {
       try {
         const res = await vehicleService.getVehicleById(id);
-        const data = res.data?.data || res.data;
+        const vehicle = res?.data?.data || res?.data || res;
 
-        if (data) {
-          setFormData({
-            make: data.make || "",
-            model: data.model || "",
-            year: data.year || "",
-            price: data.price || "",
-            mileage: data.mileage || "",
-            fuelType: data.fuelType || "",
-            transmission: data.transmission || "",
-            description: data.description || "",
-            images: data.images || []
-          });
-        }
+        setFormData({
+          make: vehicle?.make || "",
+          model: vehicle?.model || "",
+          year: vehicle?.year ?? "",
+          price: vehicle?.price ?? "",
+          mileage: vehicle?.mileage ?? "",
+          fuel_type: vehicle?.fuel_type || vehicle?.fuelType || "Petrol",
+          transmission: vehicle?.transmission || "Automatic",
+          owner_number:
+            vehicle?.owner_number || vehicle?.ownerNumber || "1st Owner",
+          rto_code: (vehicle?.rto_code || vehicle?.rtoCode || "").toUpperCase(),
+          insurance_type:
+            vehicle?.insurance_type ||
+            vehicle?.insuranceType ||
+            "Comprehensive",
+          insurance_validity: toDateInputValue(
+            vehicle?.insurance_validity || vehicle?.insuranceValidity
+          ),
+          description: vehicle?.description || "",
+        });
       } catch (err) {
-        toast.error("Could not load vehicle data.");
+        toast.error("Failed to load vehicle details.");
         navigate(-1);
       } finally {
         setLoading(false);
@@ -58,166 +82,340 @@ const EditVehicle = () => {
     fetchVehicle();
   }, [id, navigate]);
 
-  const handleUpdate = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setUpdating(true);
+    setSaving(true);
 
     try {
-      const data = new FormData();
+      const payload = new FormData();
+      payload.append("make", formData.make.trim());
+      payload.append("model", formData.model.trim());
+      payload.append("year", Number(formData.year));
+      payload.append("price", Number(formData.price));
+      payload.append("mileage", Number(formData.mileage));
+      payload.append("fuel_type", formData.fuel_type);
+      payload.append("transmission", formData.transmission);
+      payload.append("owner_number", formData.owner_number);
+      payload.append("rto_code", formData.rto_code.trim().toUpperCase());
+      payload.append("insurance_type", formData.insurance_type);
+      payload.append("insurance_validity", formData.insurance_validity || "");
+      payload.append("description", formData.description.trim());
 
-      data.append("make", formData.make);
-      data.append("model", formData.model);
-      data.append("year", Number(formData.year));
-      data.append("price", Number(formData.price));
-      data.append("mileage", Number(formData.mileage));
-      data.append("fuelType", formData.fuelType);
-      data.append("transmission", formData.transmission);
-      data.append("description", formData.description);
-
-      formData.images.forEach((img) => data.append("existingImages", img));
-
-      selectedFiles.forEach((file) => {
-        data.append("images", file);
-      });
-
-      await vehicleService.updateVehicle(id, data);
-
-      toast.success("Listing Updated Successfully!");
-      navigate(`/vehicle/${id}`);
+      await vehicleService.updateVehicle(id, payload);
+      toast.success("Vehicle updated successfully");
+      navigate(-1);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Update failed.");
+      toast.error(err.response?.data?.message || "Failed to update vehicle.");
     } finally {
-      setUpdating(false);
+      setSaving(false);
     }
   };
 
-  const removeExistingImage = (indexToRemove) => {
-    setFormData({
-      ...formData,
-      images: formData.images.filter((_, i) => i !== indexToRemove)
-    });
-  };
-
-  if (loading) return <Loader fullScreen />;
+  if (loading) return <Loader fullScreen label="Loading vehicle editor..." />;
+  if (saving) return <Loader fullScreen label="Saving changes..." />;
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] p-4 sm:p-6 md:p-8 flex justify-center">
-      <div className="w-full max-w-5xl">
+    <div
+      style={body}
+      className="relative min-h-screen overflow-x-clip bg-[#0A1628] px-4 py-6 text-[#C8D3E0] sm:px-6 lg:px-8 lg:py-10"
+    >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -left-24 top-0 h-80 w-80 rounded-full bg-[#2DD4BF]/10 blur-3xl"
+      />
 
-        {/* BACK BUTTON */}
+      <motion.div
+        initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: "easeOut" }}
+        className="relative mx-auto w-full max-w-4xl"
+      >
         <button
+          type="button"
           onClick={() => navigate(-1)}
-          className="text-gray-500 hover:text-[#D4AF37] mb-6 flex items-center gap-2 text-sm sm:text-base"
+          className={`mb-6 inline-flex items-center gap-2 rounded-xl border border-white/15 bg-[#0D1D33] px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:border-[#2DD4BF]/50 hover:bg-[#102238] hover:text-[#2DD4BF] sm:text-sm ${focusRing}`}
         >
-          <ArrowLeft size={18} /> Back
+          <ArrowLeft size={17} />
+          <span>Back</span>
         </button>
 
-        <Card className="p-4 sm:p-6 md:p-10">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 text-white">
-            Edit <span className="text-[#D4AF37]">Vehicle</span>
-          </h1>
-
-          <form onSubmit={handleUpdate} className="space-y-6">
-
-            {/* BASIC INFO */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-              <Input label="Make" value={formData.make} onChange={(e) => setFormData({ ...formData, make: e.target.value })} />
-              <Input label="Model" value={formData.model} onChange={(e) => setFormData({ ...formData, model: e.target.value })} />
-              <Input label="Year" type="number" value={formData.year} onChange={(e) => setFormData({ ...formData, year: e.target.value })} />
+        <div className="rounded-2xl border border-white/10 bg-[#0D1D33] p-5 shadow-xl sm:p-8 lg:p-10">
+          <header className="mb-8 border-b border-white/10 pb-6 text-center sm:mb-10">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-[#2DD4BF]/30 bg-[#2DD4BF]/10 text-[#2DD4BF]">
+              <Car size={24} />
             </div>
+            <h1
+              style={display}
+              className="text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl"
+            >
+              Edit <span className="text-[#2DD4BF]">Vehicle</span>
+            </h1>
+            <p className="mx-auto mt-2 max-w-md text-sm text-[#8EA0B5]">
+              Update pricing, ownership records, RTO registration, and insurance
+              validity.
+            </p>
+          </header>
 
-            {/* IMAGE GALLERY */}
-            <div>
-              <label className="text-xs text-gray-500 uppercase">Current Images</label>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-3">
-                {formData.images.map((img, index) => (
-                  <div key={index} className="relative aspect-video rounded overflow-hidden border border-gray-700">
-
-                    <img src={img} className="w-full h-full object-cover" />
-
-                    <button
-                      type="button"
-                      onClick={() => removeExistingImage(index)}
-                      className="absolute top-1 right-1 bg-red-600 p-1 rounded-full"
-                    >
-                      <X size={14} />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const imgs = [...formData.images];
-                        const selected = imgs.splice(index, 1);
-                        imgs.unshift(selected[0]);
-                        setFormData({ ...formData, images: imgs });
-                      }}
-                      className="absolute bottom-1 left-1 bg-[#D4AF37] text-black text-[10px] px-2 py-1 rounded"
-                    >
-                      Cover
-                    </button>
-
-                  </div>
-                ))}
+          <form onSubmit={handleSubmit} className="space-y-7">
+            {/* MAKE, MODEL, YEAR */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 md:grid-cols-3">
+              <div>
+                <label htmlFor="edit-make" className={labelClass}>
+                  Make (Brand)
+                </label>
+                <input
+                  id="edit-make"
+                  type="text"
+                  value={formData.make}
+                  onChange={(e) =>
+                    setFormData({ ...formData, make: e.target.value })
+                  }
+                  className={`${fieldClass} ${focusRing}`}
+                  required
+                />
               </div>
 
-              {/* FILE INPUT */}
-              <input
-                type="file"
-                multiple
-                onChange={(e) => setSelectedFiles(Array.from(e.target.files))}
-                className="mt-4 w-full bg-[#111] border border-gray-700 p-3 rounded"
-              />
+              <div>
+                <label htmlFor="edit-model" className={labelClass}>
+                  Model
+                </label>
+                <input
+                  id="edit-model"
+                  type="text"
+                  value={formData.model}
+                  onChange={(e) =>
+                    setFormData({ ...formData, model: e.target.value })
+                  }
+                  className={`${fieldClass} ${focusRing}`}
+                  required
+                />
+              </div>
+
+              <div className="sm:col-span-2 md:col-span-1">
+                <label htmlFor="edit-year" className={labelClass}>
+                  Year
+                </label>
+                <input
+                  id="edit-year"
+                  type="number"
+                  min="1990"
+                  max="2027"
+                  value={formData.year}
+                  onChange={(e) =>
+                    setFormData({ ...formData, year: e.target.value })
+                  }
+                  style={mono}
+                  className={`${fieldClass} ${focusRing}`}
+                  required
+                />
+              </div>
             </div>
 
-            {/* PRICE + MILEAGE */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input label="Price" type="number" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} />
-              <Input label="Mileage" type="number" value={formData.mileage} onChange={(e) => setFormData({ ...formData, mileage: e.target.value })} />
+            {/* PRICE & MILEAGE */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
+              <div>
+                <label htmlFor="edit-price" className={labelClass}>
+                  Price (₹)
+                </label>
+                <input
+                  id="edit-price"
+                  type="number"
+                  min="10000"
+                  value={formData.price}
+                  onChange={(e) =>
+                    setFormData({ ...formData, price: e.target.value })
+                  }
+                  style={mono}
+                  className={`${fieldClass} ${focusRing}`}
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="edit-mileage" className={labelClass}>
+                  Odometer / Mileage (km)
+                </label>
+                <input
+                  id="edit-mileage"
+                  type="number"
+                  min="0"
+                  value={formData.mileage}
+                  onChange={(e) =>
+                    setFormData({ ...formData, mileage: e.target.value })
+                  }
+                  style={mono}
+                  className={`${fieldClass} ${focusRing}`}
+                  required
+                />
+              </div>
             </div>
 
-            {/* FUEL + TRANSMISSION */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input label="Fuel Type" value={formData.fuelType} onChange={(e) => setFormData({ ...formData, fuelType: e.target.value })} />
+            {/* FUEL & TRANSMISSION */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
+              <div>
+                <label htmlFor="edit-fuel" className={labelClass}>
+                  Fuel Type
+                </label>
+                <select
+                  id="edit-fuel"
+                  value={formData.fuel_type}
+                  onChange={(e) =>
+                    setFormData({ ...formData, fuel_type: e.target.value })
+                  }
+                  className={`${fieldClass} ${focusRing}`}
+                  required
+                >
+                  <option value="Petrol">Petrol</option>
+                  <option value="Diesel">Diesel</option>
+                  <option value="Electric">Electric</option>
+                  <option value="Hybrid">Hybrid</option>
+                  <option value="CNG">CNG</option>
+                </select>
+              </div>
 
-              <select
-                className="bg-[#1a1a1a] border border-gray-700 p-3 rounded text-white"
-                value={formData.transmission}
-                onChange={(e) => setFormData({ ...formData, transmission: e.target.value })}
-              >
-                <option value="">Transmission</option>
-                <option>Automatic</option>
-                <option>Manual</option>
-              </select>
+              <div>
+                <label htmlFor="edit-transmission" className={labelClass}>
+                  Transmission
+                </label>
+                <select
+                  id="edit-transmission"
+                  value={formData.transmission}
+                  onChange={(e) =>
+                    setFormData({ ...formData, transmission: e.target.value })
+                  }
+                  className={`${fieldClass} ${focusRing}`}
+                  required
+                >
+                  <option value="Manual">Manual</option>
+                  <option value="Automatic">Automatic</option>
+                </select>
+              </div>
+            </div>
+
+            {/* OWNERSHIP, RTO & INSURANCE VERIFICATION */}
+            <div className="rounded-2xl border border-white/10 bg-[#102238]/60 p-4 sm:p-6">
+              <div className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-white">
+                <ShieldCheck size={16} className="text-[#2DD4BF]" />
+                <span>Ownership, RTO &amp; Insurance</span>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
+                <div>
+                  <label htmlFor="edit-owner" className={labelClass}>
+                    Ownership Number
+                  </label>
+                  <select
+                    id="edit-owner"
+                    value={formData.owner_number}
+                    onChange={(e) =>
+                      setFormData({ ...formData, owner_number: e.target.value })
+                    }
+                    className={`${fieldClass} ${focusRing}`}
+                    required
+                  >
+                    <option value="1st Owner">1st Owner</option>
+                    <option value="2nd Owner">2nd Owner</option>
+                    <option value="3rd Owner">3rd Owner</option>
+                    <option value="4th+ Owner">4th+ Owner</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="edit-rto" className={labelClass}>
+                    RTO Code
+                  </label>
+                  <input
+                    id="edit-rto"
+                    type="text"
+                    maxLength={8}
+                    placeholder="e.g. GJ-01, GJ-23, MH-02"
+                    value={formData.rto_code}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        rto_code: e.target.value.toUpperCase(),
+                      })
+                    }
+                    style={mono}
+                    className={`${fieldClass} uppercase ${focusRing}`}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="edit-insurance-type" className={labelClass}>
+                    Insurance Type
+                  </label>
+                  <select
+                    id="edit-insurance-type"
+                    value={formData.insurance_type}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        insurance_type: e.target.value,
+                      })
+                    }
+                    className={`${fieldClass} ${focusRing}`}
+                  >
+                    <option value="Comprehensive">
+                      Comprehensive (Zero Dep / Standard)
+                    </option>
+                    <option value="Third-Party">Third-Party</option>
+                    <option value="Expired">Expired</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="edit-insurance-validity" className={labelClass}>
+                    Insurance Valid Till
+                  </label>
+                  <input
+                    id="edit-insurance-validity"
+                    type="date"
+                    value={formData.insurance_validity}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        insurance_validity: e.target.value,
+                      })
+                    }
+                    style={mono}
+                    className={`${fieldClass} ${focusRing}`}
+                    required={formData.insurance_type !== "Expired"}
+                  />
+                </div>
+              </div>
             </div>
 
             {/* DESCRIPTION */}
-            <textarea
-              placeholder="Description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full h-28 sm:h-32 bg-[#1a1a1a] border border-gray-700 rounded p-3 text-white"
-            />
-
-            {/* BUTTONS */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Button type="submit" className="flex-1 flex items-center justify-center gap-2">
-                {updating ? <RefreshCw className="animate-spin" /> : <Save />}
-                Save
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={() => navigate(-1)}
-                className="flex-1 sm:flex-none"
-              >
-                Cancel
-              </Button>
+            <div>
+              <label htmlFor="edit-description" className={labelClass}>
+                Description
+              </label>
+              <textarea
+                id="edit-description"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                className={`h-32 resize-y ${fieldClass} ${focusRing}`}
+                required
+              />
             </div>
 
+            {/* SUBMIT */}
+            <div className="border-t border-white/10 pt-6">
+              <button
+                type="submit"
+                className={`inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#2DD4BF] px-6 py-4 text-sm font-semibold text-[#0A1628] transition-colors hover:bg-[#5EEAD4] sm:text-base ${focusRing}`}
+              >
+                <Save size={19} />
+                <span>Save vehicle changes</span>
+              </button>
+            </div>
           </form>
-        </Card>
-      </div>
+        </div>
+      </motion.div>
     </div>
   );
 };

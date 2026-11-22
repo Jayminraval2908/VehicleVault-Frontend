@@ -1,459 +1,408 @@
-// import React, { useState } from "react";
-// import { useForm } from "react-hook-form";
-// import { useNavigate, Link } from "react-router-dom";
-// import axios from "axios";
-// import { toast } from "react-toastify";
-// import { GoogleLogin } from '@react-oauth/google';
-// import { Eye, EyeOff, User, ShieldCheck, CheckCircle2 } from "lucide-react";
-
-// export default function Signup() {
-//   const [showPass, setShowPass] = useState(false);
-//   const [isLoading, setIsLoading] = useState(false);
-
-//   // Initialize form with default role as empty
-//   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
-//     defaultValues: { role: "" }
-//   });
-
-//   const navigate = useNavigate();
-//   const selectedRole = watch("role"); // Watches the hidden input to update UI cards
-
-//   // --- LOGIC: Select Role & Sync with Hook Form ---
-//   const handleRoleSelect = (role) => {
-//     setValue("role", role, { shouldValidate: true });
-//   };
-
-//   // --- LOGIC: Standard Manual Registration ---
-//   const submitHandler = async (data) => {
-//     setIsLoading(true);
-//     try {
-//       const res = await axios.post("/user/register", data);
-//       if (res.status === 201) {
-//         toast.success("Identity Created. Please Login.");
-//         navigate("/");
-//       }
-//     } catch (error) {
-//       toast.error(error.response?.data?.message || "Registration failed");
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
-
-//   // --- LOGIC: Google Registration ---
-
-//   <GoogleLogin
-//     onSuccess={async (credentialResponse) => {
-//       if (!selectedRole) {
-//         toast.warn("Please select your intended path first.");
-//         return;
-//       }
-
-//       setIsLoading(true);
-
-//       try {
-//         const res = await axios.post("/user/google-signin", {
-//           token: credentialResponse.credential, // ✅ CORRECT TOKEN
-//           role: selectedRole
-//         });
-
-//         toast.success("Welcome to the Vault!");
-
-//         localStorage.setItem("token", res.data.token);
-//         localStorage.setItem("user", JSON.stringify(res.data.user));
-
-//         navigate(`/${selectedRole}/dashboard`);
-
-//       } catch (error) {
-//         toast.error("Google Signup Failed");
-//       } finally {
-//         setIsLoading(false);
-//       }
-//     }}
-//     onError={() => toast.error("Google Signup Failed")}
-//   />
-
-
-//   return (
-//     <div className="min-h-screen flex bg-[#0D0D0D]">
-
-//       {/* LEFT SIDE IMAGE */}
-//       <div className="hidden md:flex w-1/2 h-screen relative">
-//         <img
-//           src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1600&q=80"
-//           alt="luxury car"
-//           className="object-cover w-full h-full grayscale-[20%]"
-//         />
-//         <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent"></div>
-//         <div className="absolute bottom-12 left-12 text-white z-10">
-//           <h1 className="text-5xl font-black text-amber-500 tracking-tighter italic">THE VAULT</h1>
-//           <p className="text-gray-400 text-lg uppercase tracking-[0.3em] mt-2">Secure your asset collection</p>
-//         </div>
-//       </div>
-
-//       {/* RIGHT SIDE FORM */}
-//       <div className="flex items-center justify-center w-full md:w-1/2 px-8 py-12 overflow-y-auto">
-//         <div className="w-full max-w-md">
-//           <header className="mb-8 text-center">
-//             <h2 className="text-4xl font-bold text-white mb-2">Create <span className="text-amber-500">Account</span></h2>
-//             <p className="text-gray-500 text-sm italic tracking-wide">Select your access tier to continue</p>
-//           </header>
-
-//           {/* INTERACTIVE ROLE CARDS */}
-//           <div className="grid grid-cols-2 gap-4 mb-8">
-//             <div
-//               onClick={() => handleRoleSelect("buyer")}
-//               className={`relative cursor-pointer p-5 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center justify-center gap-2 ${selectedRole === 'buyer' ? 'border-amber-500 bg-amber-500/5 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'border-gray-800 bg-black/40 grayscale opacity-60 hover:opacity-100 hover:border-gray-600'
-//                 }`}
-//             >
-//               {selectedRole === 'buyer' && <CheckCircle2 className="absolute top-2 right-2 text-amber-500" size={14} />}
-//               <User size={28} className={selectedRole === 'buyer' ? 'text-amber-500' : 'text-gray-500'} />
-//               <span className={`text-[10px] font-black uppercase tracking-widest ${selectedRole === 'buyer' ? 'text-white' : 'text-gray-500'}`}>Buyer</span>
-//             </div>
-
-//             <div
-//               onClick={() => handleRoleSelect("seller")}
-//               className={`relative cursor-pointer p-5 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center justify-center gap-2 ${selectedRole === 'seller' ? 'border-amber-500 bg-amber-500/5 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'border-gray-800 bg-black/40 grayscale opacity-60 hover:opacity-100 hover:border-gray-600'
-//                 }`}
-//             >
-//               {selectedRole === 'seller' && <CheckCircle2 className="absolute top-2 right-2 text-amber-500" size={14} />}
-//               <ShieldCheck size={28} className={selectedRole === 'seller' ? 'text-amber-500' : 'text-gray-500'} />
-//               <span className={`text-[10px] font-black uppercase tracking-widest ${selectedRole === 'seller' ? 'text-white' : 'text-gray-500'}`}>Seller</span>
-//             </div>
-//             {/* Hidden Input for Form Validation */}
-//             <input type="hidden" {...register("role", { required: "Role selection is mandatory" })} />
-//           </div>
-
-//           <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 shadow-2xl">
-//             {/* GOOGLE SIGNUP SECTION */}
-//             <div className="space-y-4 flex flex-col items-center">
-
-//               {/* Google Button */}
-//               <GoogleLogin
-//                 onSuccess={async (credentialResponse) => {
-//                   if (!selectedRole) {
-//                     toast.warn("Please select your intended path first.");
-//                     return;
-//                   }
-
-//                   setIsLoading(true);
-
-//                   try {
-//                     const res = await axios.post("/user/google-signin", {
-//                       token: credentialResponse.credential,
-//                       role: selectedRole
-//                     });
-
-//                     toast.success("Welcome to the Vault!");
-
-//                     localStorage.setItem("token", res.data.token);
-//                     localStorage.setItem("user", JSON.stringify(res.data.user));
-
-//                     navigate(`/${selectedRole}/dashboard`);
-
-//                   } catch (error) {
-//                     toast.error("Google Signup Failed");
-//                   } finally {
-//                     setIsLoading(false);
-//                   }
-//                 }}
-//                 onError={() => toast.error("Google Signup Failed")}
-//               />
-
-//               {/* Divider */}
-//               <div className="relative my-8 text-center w-full">
-//                 <hr className="border-gray-800" />
-//                 <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#121212] px-4 text-[10px] text-gray-700 font-bold uppercase tracking-tighter">
-//                   Or Manual Entry
-//                 </span>
-//               </div>
-
-//             </div>
-
-//             <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
-//               <div className="grid grid-cols-2 gap-4">
-//                 <input
-//                   placeholder="First Name"
-//                   className="w-full p-4 bg-black/50 rounded-xl border border-gray-800 text-white text-sm focus:border-amber-500 outline-none transition-all"
-//                   {...register("firstName", { required: "Required" })}
-//                 />
-//                 <input
-//                   placeholder="Last Name"
-//                   className="w-full p-4 bg-black/50 rounded-xl border border-gray-800 text-white text-sm focus:border-amber-500 outline-none transition-all"
-//                   {...register("lastName", { required: "Required" })}
-//                 />
-//               </div>
-
-//               <input
-//                 type="email"
-//                 placeholder="Email Address"
-//                 className="w-full p-4 bg-black/50 rounded-xl border border-gray-800 text-white text-sm focus:border-amber-500 outline-none transition-all"
-//                 {...register("email", { required: "Email is required" })}
-//               />
-
-//               <p className="text-gray-400 text-[10px] mb-2 text-center italic">
-//                 Please enter your phone number. Required for both Buyer and Seller accounts.
-//               </p>
-
-
-
-//               <input
-//                 type="text"
-//                 placeholder="Contact Number"
-//                 className="w-full p-4 bg-black/50 rounded-xl border border-gray-800 text-white text-sm focus:border-amber-500 outline-none transition-all"
-//                 {...register("contact", {
-//                   required: "Contact is required",
-//                   pattern: {
-//                     value: /^[0-9]{10}$/,
-//                     message: "Enter a valid 10-digit number",
-//                   },
-//                 })}
-//               />
-//               {errors.contact && (
-//                 <p className="text-amber-500 text-[10px] text-center uppercase tracking-widest">
-//                   {errors.contact.message}
-//                 </p>
-//               )}
-
-//               <div className="relative">
-//                 <input
-//                   type={showPass ? "text" : "password"}
-//                   placeholder="Security Password"
-//                   className="w-full p-4 bg-black/50 rounded-xl border border-gray-800 text-white text-sm focus:border-amber-500 outline-none transition-all"
-//                   {...register("password", { required: "Required", minLength: 6 })}
-//                 />
-//                 <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-4 text-gray-500 hover:text-white">
-//                   {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
-//                 </button>
-//               </div>
-
-//               {errors.role && <p className="text-amber-500 text-[10px] text-center uppercase tracking-widest">{errors.role.message}</p>}
-
-//               <button
-//                 type="submit"
-//                 disabled={isLoading || !selectedRole}
-//                 className="w-full bg-amber-500 hover:bg-amber-600 text-black py-4 rounded-xl font-bold uppercase tracking-widest transition-all shadow-lg shadow-amber-500/10 active:scale-95 disabled:grayscale disabled:opacity-20"
-//               >
-//                 {isLoading ? "Validating..." : "Create Account"}
-//               </button>
-//             </form>
-//           </div>
-
-//           <p className="mt-8 text-center text-gray-600 text-sm font-medium tracking-tight">
-//             Already registered? <Link to="/" className="text-amber-500 hover:text-amber-400 font-black ml-1">Login</Link>
-//           </p>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }  
-
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { GoogleLogin } from '@react-oauth/google';
-import { Eye, EyeOff, User, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { GoogleLogin } from "@react-oauth/google";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import {
+  Eye,
+  EyeOff,
+  ShoppingCart,
+  Store,
+  CheckCircle2,
+  Check,
+  X,
+} from "lucide-react";
+import AuthLayout from "../../components/layout/AuthLayout";
+import FormField, { inputClass } from "../../components/common/FormField";
+import { passwordRules, validatePassword } from "../../utils/PasswordRules";
+import { display, focusRing } from "../../utils/theme";
+
+const ROLES = [
+  {
+    value: "buyer",
+    label: "Buyer",
+    description: "Find and buy vehicles",
+    Icon: ShoppingCart,
+  },
+  {
+    value: "seller",
+    label: "Seller",
+    description: "List and sell vehicles",
+    Icon: Store,
+  },
+];
+
+const PHONE_REGEX = /^[0-9]{10}$/;
+
+const container = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.1, delayChildren: 0.05 } },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.55, ease: "easeOut" },
+  },
+};
 
 export default function Signup() {
+  const navigate = useNavigate();
+  const reduceMotion = useReducedMotion();
   const [showPass, setShowPass] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
-    defaultValues: { role: "" }
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm({
+    mode: "onTouched",
+    defaultValues: { role: "" },
   });
 
-  const navigate = useNavigate();
   const selectedRole = watch("role");
-  const contact = watch("phone"); // watch contact field for Google login
+  const phone = watch("phone");
+  const password = watch("password") || "";
+  const googleReady = !!selectedRole && PHONE_REGEX.test(phone || "");
 
-  // --- Role Selection ---
   const handleRoleSelect = (role) => {
     setValue("role", role, { shouldValidate: true });
   };
 
-  // --- Manual Signup ---
   const submitHandler = async (data) => {
     setIsLoading(true);
     try {
-      const res = await axios.post("/user/register", data);
+      const res = await axios.post("/user/register", {
+        ...data,
+        firstName: data.firstName.trim(),
+        lastName: data.lastName.trim(),
+        email: data.email.trim(),
+      });
+
       if (res.status === 201) {
-        toast.success("Identity Created. Please Login.");
-        navigate("/");
+        toast.success("Account created. Please log in.");
+        navigate("/login");
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Registration failed");
+      const serverErrors = error.response?.data?.errors;
+      toast.error(
+        serverErrors?.length
+          ? `Password needs: ${serverErrors.join(", ").toLowerCase()}`
+          : error.response?.data?.message || "Registration failed"
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  // --- Google Signup ---
-  const handleGoogleLogin = async (credentialResponse) => {
-    if (!selectedRole) {
-      toast.warn("Please select your intended path first.");
-      return;
-    }
-    if (!contact || !/^[0-9]{10}$/.test(contact)) {
-      toast.warn("Please enter a valid 10-digit contact number before Google signup.");
+  const handleGoogleSignup = async (credentialResponse) => {
+    if (!googleReady) {
+      toast.warn("Choose Buyer or Seller and enter your phone number first.");
       return;
     }
 
     setIsLoading(true);
     try {
-      const res = await axios.post("/user/google-signin", {
+      await axios.post("/user/google-signin", {
         token: credentialResponse.credential,
         role: selectedRole,
-        phone: contact // send contact along with Google token
+        phone,
       });
 
-      toast.success("Welcome to the Vault!");
-      // localStorage.setItem("token", res.data.token);
-      // localStorage.setItem("user", JSON.stringify(res.data.user));
-      // navigate(`/${selectedRole}/dashboard`);
-      // ✅ NEW LOGIC: Just notify and send to Login
-toast.success("Account Created! Please sign in to enter the Vault.");
-navigate("/login"); // Or "/login" depending on your route
+      toast.success("Account created. Please log in.");
+      navigate("/login");
     } catch (error) {
-      toast.error("Google Signup Failed");
+      toast.error(error.response?.data?.message || "Google signup failed");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex bg-[#0D0D0D]">
+    <AuthLayout
+      imageSrc="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1600&q=80"
+      imageAlt="Luxury sports car"
+      heading="List it or find it."
+      blurb="Create a buyer or seller account in a minute."
+    >
+      <motion.div
+        className="w-full max-w-md"
+        variants={container}
+        initial={reduceMotion ? false : "hidden"}
+        animate="visible"
+      >
+        <motion.div variants={item}>
+          <h1 className="text-3xl font-bold text-white sm:text-4xl" style={display}>
+            Create your account
+          </h1>
+          <p className="mt-2 text-[#8EA0B5]">
+            Choose how you’ll use Vehicle Vault.
+          </p>
+        </motion.div>
 
-      {/* LEFT IMAGE */}
-      <div className="hidden md:flex w-1/2 h-screen relative">
-        <img
-          src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1600&q=80"
-          alt="luxury car"
-          className="object-cover w-full h-full grayscale-[20%]"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent"></div>
-        <div className="absolute bottom-12 left-12 text-white z-10">
-          <h1 className="text-5xl font-black text-amber-500 tracking-tighter italic">THE VAULT</h1>
-          <p className="text-gray-400 text-lg uppercase tracking-[0.3em] mt-2">Secure your asset collection</p>
-        </div>
-      </div>
-
-      {/* RIGHT FORM */}
-      <div className="flex items-center justify-center w-full md:w-1/2 px-8 py-12 overflow-y-auto">
-        <div className="w-full max-w-md">
-          <header className="mb-8 text-center">
-            <h2 className="text-4xl font-bold text-white mb-2">Create <span className="text-amber-500">Account</span></h2>
-            <p className="text-gray-500 text-sm italic tracking-wide">Select your access tier to continue</p>
-          </header>
-
-          {/* ROLE CARDS */}
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            <div
-              onClick={() => handleRoleSelect("buyer")}
-              className={`relative cursor-pointer p-5 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center justify-center gap-2 ${selectedRole === 'buyer' ? 'border-amber-500 bg-amber-500/5 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'border-gray-800 bg-black/40 grayscale opacity-60 hover:opacity-100 hover:border-gray-600'}`}
-            >
-              {selectedRole === 'buyer' && <CheckCircle2 className="absolute top-2 right-2 text-amber-500" size={14} />}
-              <User size={28} className={selectedRole === 'buyer' ? 'text-amber-500' : 'text-gray-500'} />
-              <span className={`text-[10px] font-black uppercase tracking-widest ${selectedRole === 'buyer' ? 'text-white' : 'text-gray-500'}`}>Buyer</span>
-            </div>
-
-            <div
-              onClick={() => handleRoleSelect("seller")}
-              className={`relative cursor-pointer p-5 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center justify-center gap-2 ${selectedRole === 'seller' ? 'border-amber-500 bg-amber-500/5 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'border-gray-800 bg-black/40 grayscale opacity-60 hover:opacity-100 hover:border-gray-600'}`}
-            >
-              {selectedRole === 'seller' && <CheckCircle2 className="absolute top-2 right-2 text-amber-500" size={14} />}
-              <ShieldCheck size={28} className={selectedRole === 'seller' ? 'text-amber-500' : 'text-gray-500'} />
-              <span className={`text-[10px] font-black uppercase tracking-widest ${selectedRole === 'seller' ? 'text-white' : 'text-gray-500'}`}>Seller</span>
-            </div>
-
-            <input type="hidden" {...register("role", { required: "Role selection is mandatory" })} />
+        <motion.div variants={item} className="mt-8">
+          <div
+            role="radiogroup"
+            aria-label="Account type"
+            className="grid grid-cols-2 gap-3 sm:gap-4"
+          >
+            {ROLES.map(({ value, label, description, Icon }) => {
+              const active = selectedRole === value;
+              return (
+                <motion.button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => handleRoleSelect(value)}
+                  whileTap={reduceMotion ? undefined : { scale: 0.97 }}
+                  className={`relative flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition-colors ${focusRing} ${
+                    active
+                      ? "border-[#2DD4BF] bg-[#2DD4BF]/10"
+                      : "border-white/15 bg-[#0D1D33] hover:border-white/40"
+                  }`}
+                >
+                  {active && (
+                    <CheckCircle2
+                      size={16}
+                      className="absolute right-3 top-3 text-[#2DD4BF]"
+                    />
+                  )}
+                  <Icon
+                    size={24}
+                    className={active ? "text-[#2DD4BF]" : "text-[#8EA0B5]"}
+                  />
+                  <span className="font-semibold text-white" style={display}>
+                    {label}
+                  </span>
+                  <span className="text-sm text-[#8EA0B5]">{description}</span>
+                </motion.button>
+              );
+            })}
           </div>
+          <input
+            type="hidden"
+            {...register("role", { required: "Choose Buyer or Seller" })}
+          />
+          <AnimatePresence>
+            {errors.role && (
+              <motion.p
+                role="alert"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden pt-2 text-sm text-red-400"
+              >
+                {errors.role.message}
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </motion.div>
 
-          <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 shadow-2xl">
-            {/* GOOGLE SIGNUP SECTION */}
-            <div className="space-y-4 flex flex-col items-center">
-              <p className="text-gray-400 text-[10px] mb-2 text-center italic">
-  Please enter your phone number. Required for both Buyer and Seller accounts.
-</p>
-
-              {/* Contact for Google Signup */}
+        <motion.div
+          variants={item}
+          className="mt-6 rounded-2xl border border-white/10 bg-[#0D1D33] p-6 sm:p-8"
+        >
+          <div className="space-y-5">
+            <FormField
+              id="signup-phone"
+              label="Phone number"
+              error={errors.phone}
+              hint="Required for both buyer and seller accounts."
+            >
               <input
+                id="signup-phone"
                 type="text"
-                placeholder="Contact Number"
-                className="w-full p-4 bg-black/50 rounded-xl border border-gray-800 text-white text-sm focus:border-amber-500 outline-none transition-all"
+                inputMode="numeric"
+                autoComplete="tel-national"
+                maxLength={10}
+                placeholder="10-digit number"
+                aria-invalid={!!errors.phone}
+                aria-describedby={errors.phone ? "signup-phone-error" : undefined}
+                className={inputClass(errors.phone)}
                 {...register("phone", {
-                  required: "Contact is required",
-                  pattern: { value: /^[0-9]{10}$/, message: "Enter a valid 10-digit number" },
+                  required: "Enter your phone number",
+                  pattern: {
+                    value: PHONE_REGEX,
+                    message: "Enter a valid 10-digit number",
+                  },
                 })}
               />
-              {errors.contact && <p className="text-amber-500 text-[10px] text-center uppercase tracking-widest">{errors.contact.message}</p>}
+            </FormField>
 
-              {/* Google Button */}
-              {selectedRole && contact && /^[0-9]{10}$/.test(contact) && (
-  <GoogleLogin
-    onSuccess={handleGoogleLogin}
-    onError={() => toast.error("Google Signup Failed")}
-  />
-)}
-              {/* Divider */}
-              <div className="relative my-8 text-center w-full">
-                <hr className="border-gray-800" />
-                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#121212] px-4 text-[10px] text-gray-700 font-bold uppercase tracking-tighter">
-                  Or Manual Entry
-                </span>
-              </div>
+            <div className="flex min-h-[44px] justify-center">
+              {googleReady ? (
+                <GoogleLogin
+                  onSuccess={handleGoogleSignup}
+                  onError={() => toast.error("Google signup failed")}
+                  theme="filled_black"
+                  size="large"
+                  text="signup_with"
+                  shape="pill"
+                />
+              ) : (
+                <p className="text-center text-sm text-[#8EA0B5]">
+                  Choose Buyer or Seller and enter your phone number to sign up
+                  with Google.
+                </p>
+              )}
             </div>
-
-            <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  placeholder="First Name"
-                  className="w-full p-4 bg-black/50 rounded-xl border border-gray-800 text-white text-sm focus:border-amber-500 outline-none transition-all"
-                  {...register("firstName", { required: "Required" })}
-                />
-                <input
-                  placeholder="Last Name"
-                  className="w-full p-4 bg-black/50 rounded-xl border border-gray-800 text-white text-sm focus:border-amber-500 outline-none transition-all"
-                  {...register("lastName", { required: "Required" })}
-                />
-              </div>
-
-              <input
-                type="email"
-                placeholder="Email Address"
-                className="w-full p-4 bg-black/50 rounded-xl border border-gray-800 text-white text-sm focus:border-amber-500 outline-none transition-all"
-                {...register("email", { required: "Email is required" })}
-              />
-
-              <div className="relative">
-                <input
-                  type={showPass ? "text" : "password"}
-                  placeholder="Security Password"
-                  className="w-full p-4 bg-black/50 rounded-xl border border-gray-800 text-white text-sm focus:border-amber-500 outline-none transition-all"
-                  {...register("password", { required: "Required", minLength: 6 })}
-                />
-                <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-4 text-gray-500 hover:text-white">
-                  {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-
-              {errors.role && <p className="text-amber-500 text-[10px] text-center uppercase tracking-widest">{errors.role.message}</p>}
-
-              <button
-                type="submit"
-                disabled={isLoading || !selectedRole}
-                className="w-full bg-amber-500 hover:bg-amber-600 text-black py-4 rounded-xl font-bold uppercase tracking-widest transition-all shadow-lg shadow-amber-500/10 active:scale-95 disabled:grayscale disabled:opacity-20"
-              >
-                {isLoading ? "Validating..." : "Create Account"}
-              </button>
-            </form>
           </div>
 
-          <p className="mt-8 text-center text-gray-600 text-sm font-medium tracking-tight">
-            Already registered? <Link to="/" className="text-amber-500 hover:text-amber-400 font-black ml-1">Login</Link>
-          </p>
-        </div>
-      </div>
-    </div>
+          <div className="my-6 flex items-center gap-4 text-sm text-[#8EA0B5]">
+            <span className="h-px flex-1 bg-white/10" />
+            or use your email
+            <span className="h-px flex-1 bg-white/10" />
+          </div>
+
+          <form
+            onSubmit={handleSubmit(submitHandler)}
+            className="space-y-5"
+            noValidate
+          >
+            <div className="grid gap-5 sm:grid-cols-2">
+              <FormField id="signup-first" label="First name" error={errors.firstName}>
+                <input
+                  id="signup-first"
+                  autoComplete="given-name"
+                  aria-invalid={!!errors.firstName}
+                  aria-describedby={
+                    errors.firstName ? "signup-first-error" : undefined
+                  }
+                  className={inputClass(errors.firstName)}
+                  {...register("firstName", {
+                    required: "Enter your first name",
+                    validate: (v) =>
+                      v.trim().length > 0 || "Enter your first name",
+                  })}
+                />
+              </FormField>
+              <FormField id="signup-last" label="Last name" error={errors.lastName}>
+                <input
+                  id="signup-last"
+                  autoComplete="family-name"
+                  aria-invalid={!!errors.lastName}
+                  aria-describedby={
+                    errors.lastName ? "signup-last-error" : undefined
+                  }
+                  className={inputClass(errors.lastName)}
+                  {...register("lastName", {
+                    required: "Enter your last name",
+                    validate: (v) =>
+                      v.trim().length > 0 || "Enter your last name",
+                  })}
+                />
+              </FormField>
+            </div>
+
+            <FormField id="signup-email" label="Email address" error={errors.email}>
+              <input
+                id="signup-email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                aria-invalid={!!errors.email}
+                aria-describedby={errors.email ? "signup-email-error" : undefined}
+                className={inputClass(errors.email)}
+                {...register("email", {
+                  required: "Enter your email address",
+                  pattern: {
+                    value: /^\S+@\S+\.\S+$/,
+                    message: "Enter a valid email address",
+                  },
+                })}
+              />
+            </FormField>
+
+            <div>
+              <FormField id="signup-password" label="Password" error={errors.password}>
+                <div className="relative">
+                  <input
+                    id="signup-password"
+                    type={showPass ? "text" : "password"}
+                    autoComplete="new-password"
+                    placeholder="Create a password"
+                    aria-invalid={!!errors.password}
+                    aria-describedby={
+                      errors.password ? "signup-password-error" : undefined
+                    }
+                    className={`${inputClass(errors.password)} pr-12`}
+                    {...register("password", {
+                      required: "Enter a password",
+                      validate: validatePassword,
+                    })}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(!showPass)}
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-[#8EA0B5] hover:text-white ${focusRing}`}
+                    aria-label={showPass ? "Hide password" : "Show password"}
+                  >
+                    {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </FormField>
+
+              <AnimatePresence>
+                {password.length > 0 && (
+                  <motion.ul
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <li className="pt-3" aria-hidden="true" />
+                    {passwordRules.map((rule) => {
+                      const passed = rule.test(password);
+                      return (
+                        <li
+                          key={rule.label}
+                          className={`flex items-center gap-2 py-0.5 text-sm transition-colors ${
+                            passed ? "text-[#2DD4BF]" : "text-[#8EA0B5]"
+                          }`}
+                        >
+                          {passed ? <Check size={14} /> : <X size={14} />}
+                          {rule.label}
+                          <span className="sr-only">
+                            {passed ? "(done)" : "(not met)"}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </motion.ul>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <motion.button
+              type="submit"
+              disabled={isLoading}
+              whileHover={reduceMotion || isLoading ? undefined : { y: -2 }}
+              whileTap={reduceMotion || isLoading ? undefined : { scale: 0.97 }}
+              className={`w-full rounded-lg bg-[#2DD4BF] px-6 py-3.5 font-semibold text-[#0A1628] shadow-[0_8px_24px_-8px_rgba(45,212,191,0.55)] transition-colors hover:bg-[#5EEAD4] disabled:cursor-not-allowed disabled:opacity-60 ${focusRing}`}
+            >
+              {isLoading ? "Creating account..." : "Create account"}
+            </motion.button>
+          </form>
+        </motion.div>
+
+        <motion.p variants={item} className="mt-6 text-center text-[#8EA0B5]">
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className={`font-semibold text-[#2DD4BF] hover:text-[#5EEAD4] ${focusRing}`}
+          >
+            Log in
+          </Link>
+        </motion.p>
+      </motion.div>
+    </AuthLayout>
   );
 }

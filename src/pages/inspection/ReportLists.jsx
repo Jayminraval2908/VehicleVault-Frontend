@@ -1,169 +1,364 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import inspectionService from "../../services/inspectionService";
-import Loader from "../../components/common/Loader";
-import Card from "../../components/common/Card";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   ShieldCheck,
   ChevronLeft,
   Gauge,
   Activity,
-  Sparkles,
   AlertCircle,
   Settings,
   Disc,
   Wind,
   History,
-  LifeBuoy
+  LifeBuoy,
+  RefreshCw,
+  FileText,
 } from "lucide-react";
+import inspectionService from "../../services/inspectionService";
+import { display, focusRing } from "../../utils/theme";
 
-const ReportsList = () => {
-  const { vehicleId } = useParams();
-  const navigate = useNavigate();
-  const [reports, setReports] = useState([]);
-  const [loading, setLoading] = useState(true);
+const GRADE_TONES = {
+  "A+": "good",
+  A: "good",
+  B: "warn",
+  C: "warn",
+  D: "bad",
+};
 
-  useEffect(() => {
-    const fetchReports = async () => {
-      try {
-        const res = await inspectionService.getReportsByVehicle(vehicleId);
-        const reportArray = res.data || res || [];
-        setReports(Array.isArray(reportArray) ? reportArray : []);
-      } catch (err) {
-        console.error("Error fetching reports", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchReports();
-  }, [vehicleId]);
+const GROUPS = [
+  {
+    title: "Core performance",
+    items: [
+      {
+        key: "engineStatus",
+        label: "Engine",
+        Icon: Gauge,
+        tones: { Excellent: "good", Good: "good", Fair: "warn", "Needs Repair": "bad" },
+      },
+      { key: "transmission", label: "Transmission", Icon: Settings, tones: {} },
+      {
+        key: "acPerformance",
+        label: "Air conditioning",
+        Icon: Wind,
+        tones: { Chilling: "good", Good: "good", Weak: "warn", "Not Working": "bad" },
+      },
+      {
+        key: "serviceHistory",
+        label: "Service history",
+        Icon: History,
+        tones: {
+          "Full Service History": "good",
+          Full: "good",
+          Partial: "warn",
+          None: "bad",
+        },
+      },
+    ],
+  },
+  {
+    title: "Mechanical health",
+    items: [
+      {
+        key: "suspension",
+        label: "Suspension",
+        Icon: Activity,
+        tones: { Excellent: "good", Good: "good", Weak: "warn", Leaking: "bad" },
+      },
+      {
+        key: "brakeCondition",
+        label: "Brakes",
+        Icon: Disc,
+        tones: { Excellent: "good", Good: "good", Fair: "warn", "Replace Soon": "bad" },
+      },
+      {
+        key: "tireLife",
+        label: "Tires",
+        Icon: LifeBuoy,
+        tones: {
+          New: "good",
+          "Great (70-90%)": "good",
+          Good: "good",
+          Average: "warn",
+          Worn: "bad",
+        },
+      },
+      {
+        key: "accidentHistory",
+        label: "Accident history",
+        Icon: AlertCircle,
+        tones: { None: "good", Minor: "warn", Major: "bad" },
+      },
+    ],
+  },
+];
 
-  if (loading) return <Loader fullScreen />;
+const TONE_CLASSES = {
+  good: { text: "text-[#2DD4BF]", dot: "bg-[#2DD4BF]" },
+  warn: { text: "text-amber-300", dot: "bg-amber-300" },
+  bad: { text: "text-red-400", dot: "bg-red-400" },
+  neutral: { text: "text-white", dot: "bg-[#8EA0B5]" },
+};
+
+const normalizeList = (res) => {
+  const data = res?.data?.data || res?.data || res;
+  return Array.isArray(data) ? data : [];
+};
+
+const formatDate = (value) => {
+  if (!value) return "Date not recorded";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Date not recorded";
+  return date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+};
+
+function ReportItem({ Icon, label, value, tone = "neutral" }) {
+  const classes = TONE_CLASSES[tone] || TONE_CLASSES.neutral;
 
   return (
-    <div className="p-8 bg-[#0D0D0D] min-h-screen text-white">
-      <div className="max-w-5xl mx-auto">
+    <div className="group flex items-center gap-4">
+      <div className="shrink-0 rounded-lg bg-white/5 p-2.5 text-[#2DD4BF] transition-colors group-hover:bg-[#2DD4BF] group-hover:text-[#0A1628]">
+        <Icon size={18} aria-hidden="true" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-sm text-[#8EA0B5]">{label}</p>
+        <p className={`flex items-center gap-2 font-semibold ${classes.text}`}>
+          <span
+            aria-hidden="true"
+            className={`h-2 w-2 shrink-0 rounded-full ${classes.dot}`}
+          />
+          {value || "—"}
+        </p>
+      </div>
+    </div>
+  );
+}
 
-        {/* Header Navigation */}
-        <div className="flex items-center justify-between mb-12">
-          <button
-            onClick={() => navigate(-1)}
-            className="text-gray-500 hover:text-[#D4AF37] flex items-center gap-2 transition-all group"
+function GradeBox({ label, value }) {
+  const tone = TONE_CLASSES[GRADE_TONES[value] || "neutral"];
+
+  return (
+    <div className="flex-1 rounded-xl border border-white/10 bg-white/5 p-3">
+      <p className="text-sm text-[#8EA0B5]">{label}</p>
+      <p className={`text-xl font-bold ${tone.text}`} style={display}>
+        {value || "—"}
+      </p>
+    </div>
+  );
+}
+
+function ReportCard({ report, isLatest, index }) {
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <motion.li
+      initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: reduceMotion ? 0 : index * 0.1, ease: "easeOut" }}
+      className="overflow-hidden rounded-2xl border border-white/10 bg-[#0D1D33]"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-[#102238] p-5 sm:px-8">
+        <div>
+          <p className="text-sm text-[#8EA0B5]">Report date</p>
+          <p className="font-semibold text-white">{formatDate(report.createdAt)}</p>
+        </div>
+        {isLatest && (
+          <span className="rounded-full border border-[#2DD4BF]/40 bg-[#2DD4BF]/10 px-3 py-1 text-sm font-medium text-[#2DD4BF]">
+            Latest report
+          </span>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 gap-8 p-5 sm:p-8 lg:grid-cols-3 lg:gap-10">
+        {GROUPS.map((group) => (
+          <section key={group.title} className="space-y-5">
+            <h3
+              className="border-l-2 border-[#2DD4BF] pl-3 text-lg font-semibold text-white"
+              style={display}
+            >
+              {group.title}
+            </h3>
+            {group.items.map(({ key, label, Icon, tones }) => (
+              <ReportItem
+                key={key}
+                Icon={Icon}
+                label={label}
+                value={report[key]}
+                tone={tones[report[key]] || "neutral"}
+              />
+            ))}
+          </section>
+        ))}
+
+        <section className="flex flex-col gap-5">
+          <h3
+            className="border-l-2 border-[#2DD4BF] pl-3 text-lg font-semibold text-white"
+            style={display}
           >
-            <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-            <span className="text-xs font-bold uppercase tracking-widest">Back to Vehicle</span>
+            Appearance and notes
+          </h3>
+
+          <div className="flex gap-3">
+            <GradeBox label="Exterior" value={report.exteriorGrade} />
+            <GradeBox label="Interior" value={report.interiorGrade} />
+          </div>
+
+          <div className="flex min-h-[150px] flex-1 flex-col rounded-2xl border border-white/10 bg-[#0A1628] p-5">
+            <p className="mb-2 text-sm font-semibold text-[#2DD4BF]">
+              Seller’s summary
+            </p>
+            <p className="flex-1 overflow-y-auto leading-relaxed text-[#C8D3E0]">
+              {report.summary ? `“${report.summary}”` : "No summary was provided."}
+            </p>
+          </div>
+        </section>
+      </div>
+    </motion.li>
+  );
+}
+
+function SkeletonList() {
+  return (
+    <ul className="space-y-8" aria-busy="true" aria-label="Loading reports">
+      {[0, 1].map((i) => (
+        <li
+          key={i}
+          className="h-80 rounded-2xl border border-white/10 bg-[#0D1D33] motion-safe:animate-pulse"
+        />
+      ))}
+    </ul>
+  );
+}
+
+export default function ReportsList() {
+  const params = useParams();
+  const vehicleId = params.vehicleId || params.id;
+  const navigate = useNavigate();
+
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+
+    const fetchReports = async () => {
+      setLoading(true);
+      setFailed(false);
+
+      try {
+        const res = await inspectionService.getReportsByVehicle(vehicleId);
+        if (!active) return;
+
+        const list = normalizeList(res);
+        list.sort(
+          (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+        );
+        setReports(list);
+      } catch (err) {
+        if (!active) return;
+        console.error("Error fetching reports", err);
+        setFailed(true);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    fetchReports();
+    return () => {
+      active = false;
+    };
+  }, [vehicleId, reloadKey]);
+
+  return (
+    <div className="min-h-screen bg-[#0A1628] p-5 text-[#C8D3E0] sm:p-8">
+      <div className="mx-auto max-w-5xl">
+        <div className="mb-10 flex flex-wrap items-center justify-between gap-4">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className={`group flex items-center gap-2 text-[#8EA0B5] transition-colors hover:text-white ${focusRing}`}
+          >
+            <ChevronLeft
+              size={20}
+              className="transition-transform duration-200 group-hover:-translate-x-1"
+            />
+            Back to vehicle
           </button>
-          <div className="flex items-center gap-3 bg-[#D4AF37]/10 px-4 py-2 rounded-full border border-[#D4AF37]/30">
-            <ShieldCheck className="text-[#D4AF37]" size={18} />
-            <span className="text-[#D4AF37] text-[10px] font-black uppercase tracking-widest">Vault Certified Asset</span>
+
+          <div className="flex items-center gap-2 rounded-full border border-[#2DD4BF]/30 bg-[#2DD4BF]/10 px-4 py-2 text-sm font-medium text-[#2DD4BF]">
+            <ShieldCheck size={16} aria-hidden="true" />
+            Submitted by the seller
           </div>
         </div>
 
-        <header className="mb-12">
-          <h1 className="text-5xl font-black mb-2 uppercase tracking-tighter">Inspection <span className="text-[#D4AF37]">History</span></h1>
-          <p className="text-gray-500 text-sm uppercase tracking-widest font-medium">Technical analysis for ID: <span className="text-gray-300 font-mono">#{vehicleId?.slice(-6) || "N/A"}</span></p>
+        <header className="mb-10">
+          <h1
+            className="text-3xl font-bold text-white sm:text-4xl lg:text-5xl"
+            style={display}
+          >
+            Inspection reports
+          </h1>
+          {vehicleId && (
+            <p className="mt-3 text-[#8EA0B5]">Vehicle #{vehicleId.slice(-6)}</p>
+          )}
         </header>
 
-        {reports.length === 0 ? (
-          <div className="text-center py-24 bg-[#111111]/30 border border-dashed border-gray-800 rounded-3xl">
-            <AlertCircle className="mx-auto text-gray-700 mb-4" size={48} />
-            <p className="text-gray-600 italic uppercase tracking-widest text-xs">No certified records found for this asset.</p>
+        {loading ? (
+          <SkeletonList />
+        ) : failed ? (
+          <div
+            role="alert"
+            className="rounded-2xl border border-red-400/30 bg-red-400/5 p-10 text-center sm:p-16"
+          >
+            <p className="text-white">We couldn’t load the reports.</p>
+            <button
+              type="button"
+              onClick={() => setReloadKey((k) => k + 1)}
+              className={`mt-5 inline-flex items-center gap-2 rounded-lg border border-white/20 px-5 py-2.5 font-medium text-white transition-colors hover:border-[#2DD4BF] hover:text-[#2DD4BF] ${focusRing}`}
+            >
+              <RefreshCw size={16} />
+              Try again
+            </button>
+          </div>
+        ) : reports.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-white/20 p-10 text-center sm:p-20">
+            <FileText
+              className="mx-auto mb-4 text-[#8EA0B5]"
+              size={44}
+              aria-hidden="true"
+            />
+            <p className="text-lg text-white">No inspection reports yet.</p>
+            <p className="mt-2 text-[#8EA0B5]">
+              The seller hasn’t added a report for this vehicle.
+            </p>
           </div>
         ) : (
-          <div className="space-y-10">
-            {reports.map((report) => (
-              <Card key={report._id} className="relative overflow-hidden group border-gray-800 bg-[#111111]/80 backdrop-blur-md p-0">
-
-                {/* Visual Grading Header */}
-                <div className="bg-gradient-to-r from-[#111] to-[#1a1a1a] p-6 border-b border-gray-800 flex justify-between items-center">
-                  <div>
-                    <span className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] block mb-1">Certification Date</span>
-                    <span className="text-sm font-bold text-gray-200">{new Date(report.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <span className="text-[10px] text-[#D4AF37] font-black uppercase tracking-[0.2em] mb-1">Condition Score</span>
-                    <div className="bg-[#D4AF37] text-black px-4 py-1 font-black text-xl rounded-lg shadow-lg">
-                      {report.interiorGrade || 'A'}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-8 grid grid-cols-1 lg:grid-cols-3 gap-10">
-
-                  {/* Column 1: Core Performance */}
-                  <div className="space-y-6">
-                    <h4 className="text-[10px] text-gray-600 font-black uppercase tracking-widest border-l-2 border-[#D4AF37] pl-3">Core Performance</h4>
-                    <ReportItem icon={<Gauge />} label="Engine Health" value={report.engineStatus} />
-                    <ReportItem icon={<Settings />} label="Transmission" value={report.transmission} />
-                    <ReportItem icon={<Wind />} label="AC Performance" value={report.acPerformance} />
-                    <ReportItem icon={<History />} label="Service History" value={report.serviceHistory} />
-                  </div>
-
-                  {/* Column 2: Mechanical Health */}
-                  <div className="space-y-6">
-                    <h4 className="text-[10px] text-gray-600 font-black uppercase tracking-widest border-l-2 border-[#D4AF37] pl-3">Mechanical Health</h4>
-                    <ReportItem icon={<Activity />} label="Suspension" value={report.suspension} />
-                    <ReportItem icon={<Disc />} label="Brake Condition" value={report.brakeCondition} />
-                    <ReportItem icon={<LifeBuoy />} label="Tire Life" value={report.tireLife} />
-                    <ReportItem icon={<AlertCircle />} label="Accidents" value={report.accidentHistory} />
-                  </div>
-
-                  {/* Column 3: Grades & Summary */}
-                  {/* Column 3: Grades & Summary */}
-                  <div className="flex flex-col space-y-6 h-full"> {/* 🚩 Added h-full and flex-col */}
-                    <h4 className="text-[10px] text-gray-600 font-black uppercase tracking-widest border-l-2 border-[#D4AF37] pl-3">
-                      Aesthetic & Notes
-                    </h4>
-
-                    <div className="flex gap-4">
-                      <div className="flex-1 bg-white/5 p-3 rounded-xl border border-gray-800">
-                        <p className="text-[9px] text-gray-500 uppercase font-bold mb-1">Exterior</p>
-                        <p className="text-lg font-black text-white">{report.exteriorGrade}</p>
-                      </div>
-                      <div className="flex-1 bg-white/5 p-3 rounded-xl border border-gray-800">
-                        <p className="text-[9px] text-gray-500 uppercase font-bold mb-1">Interior</p>
-                        <p className="text-lg font-black text-white">{report.interiorGrade}</p>
-                      </div>
-                    </div>
-
-                    {/* 🚩 UPDATED SUMMARY BOX */}
-                    <div className="bg-[#0D0D0D] p-5 rounded-2xl border border-gray-800 flex-1 flex flex-col min-h-[150px]">
-                      <p className="text-[10px] uppercase text-[#D4AF37] font-black mb-3 tracking-widest">
-                        Inspector Summary
-                      </p>
-                      <p className="text-xs text-gray-400 leading-relaxed italic font-medium flex-1 overflow-y-auto">
-                        "{report.summary || "This asset has been verified against Vault standards."}"
-                      </p>
-                    </div>
-                  </div>
-
-                </div>
-              </Card>
+          <ul className="space-y-8">
+            {reports.map((report, index) => (
+              <ReportCard
+                key={report._id}
+                report={report}
+                isLatest={index === 0}
+                index={index}
+              />
             ))}
-          </div>
+          </ul>
         )}
 
-        <footer className="mt-20 pt-10 border-t border-gray-900 text-center">
-          <p className="text-gray-600 text-[9px] max-w-xl mx-auto leading-relaxed uppercase tracking-[0.2em] font-bold">
-            Inspection reports are snapshots of vehicle condition at the time of certification. Vehicle Vault does not guarantee condition post-record date.
+        <footer className="mt-16 border-t border-white/10 pt-8 text-center">
+          <p className="mx-auto max-w-xl text-sm leading-relaxed text-[#8EA0B5]">
+            Inspection reports are snapshots of a vehicle’s condition on the
+            report date. Vehicle Vault does not guarantee its condition after
+            that date.
           </p>
         </footer>
       </div>
     </div>
   );
-};
-
-// Helper Component for consistency
-const ReportItem = ({ icon, label, value }) => (
-  <div className="flex items-center gap-4 group">
-    <div className="p-2 bg-white/5 rounded-lg text-[#D4AF37] group-hover:bg-[#D4AF37] group-hover:text-black transition-all">
-      {React.cloneElement(icon, { size: 18 })}
-    </div>
-    <div>
-      <p className="text-[9px] uppercase text-gray-600 font-black tracking-widest">{label}</p>
-      <p className="text-sm font-bold text-gray-200">{value}</p>
-    </div>
-  </div>
-);
-
-export default ReportsList;
+}

@@ -1,92 +1,105 @@
-import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import inquiryService from "../../services/inquiryService";
-import Button from "../../components/common/Button";
-import Input from "../../components/common/Input";
-import Loader from "../../components/common/Loader";
-import { ArrowLeft, Send } from "lucide-react";
+import React from "react";
+import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
+import { motion, useReducedMotion } from "framer-motion";
+import { ArrowLeft } from "lucide-react";
 import { toast } from "react-toastify";
+import inquiryService from "../../services/inquiryService";
+import InquiryForm from "../../components/user/Inquiryform";
+import { display, focusRing } from "../../utils/theme";
 
-const SendInquiry = () => {
-  // 🚩 Ensure this matches the parameter name in your App.js route (e.g., :vehicleId)
-  const { vehicleId } = useParams(); 
+const ROUTES = {
+  inventory: "/buyer/inventory",
+};
+
+export default function SendInquiry() {
+  const params = useParams();
+  const vehicleId = params.vehicleId || params.id;
+
   const navigate = useNavigate();
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+  const location = useLocation();
+  const reduceMotion = useReducedMotion();
 
-  const handleSend = async (e) => {
-    e.preventDefault();
-    
-    if (!message.trim()) {
-      return toast.error("Please enter a message before sending.");
-    }
-
-    setLoading(true);
-    try {
-      // 🚩 Sending the inquiry to the owner as shown in the UI
-      await inquiryService.sendInquiry({ 
-        vehicle_id: vehicleId, 
-        message: message 
-      });
-      
-      toast.success("Inquiry Sent to the Vault Owner!");
+  const goBack = () => {
+    if (location.key !== "default") {
       navigate(-1);
-    } catch (err) {
-    // 🚩 Provide specific feedback for the 403 error
-    if (err.response?.status === 403) {
-      toast.error("You are not authorized to send this inquiry. Please re-login.");
+    } else if (vehicleId) {
+      navigate(`/vehicle/${vehicleId}`);
     } else {
-      toast.error("Error sending inquiry");
-    }
-    } finally {
-      setLoading(false);
+      navigate(ROUTES.inventory);
     }
   };
 
-  if (loading) return <Loader fullScreen />;
+  const handleSend = async (message) => {
+    if (!vehicleId) {
+      toast.error("This vehicle could not be found.");
+      return false;
+    }
+
+    try {
+      await inquiryService.sendInquiry({ vehicle_id: vehicleId, message });
+      toast.success("Inquiry sent to the seller");
+      goBack();
+      return true;
+    } catch (err) {
+      const status = err.response?.status;
+
+      if (status === 401 || status === 403) {
+        toast.error("You can’t send this inquiry. Please log in again.");
+      } else {
+        toast.error(err.response?.data?.message || "Could not send the inquiry");
+      }
+      return false;
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] p-6 flex flex-col items-center justify-center">
-      <div className="w-full max-w-2xl bg-[#111111] border border-[#D4AF37]/20 p-10 rounded-2xl shadow-2xl">
-        {/* Back Button */}
-        <button 
-          onClick={() => navigate(-1)} 
-          className="text-gray-500 hover:text-[#D4AF37] mb-8 flex items-center gap-2 transition-all text-sm uppercase tracking-widest font-bold"
+    <div className="flex min-h-screen items-center justify-center bg-[#0A1628] p-5 text-[#C8D3E0] sm:p-8">
+      <motion.div
+        initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#0D1D33] p-6 shadow-2xl sm:p-10"
+      >
+        <button
+          type="button"
+          onClick={goBack}
+          className={`group mb-8 flex items-center gap-2 text-sm text-[#8EA0B5] transition-colors hover:text-white ${focusRing}`}
         >
-          <ArrowLeft size={16} /> Back
+          <ArrowLeft
+            size={16}
+            className="transition-transform duration-200 group-hover:-translate-x-1"
+          />
+          Back
         </button>
 
-        {/* Title and Subtitle */}
-        <h1 className="text-4xl font-bold text-[#D4AF37] mb-2 tracking-tight">Vehicle Inquiry</h1>
-        <p className="text-gray-400 mb-10 text-lg">Send a premium inquiry to the vehicle owner.</p>
+        <h1
+          className="text-3xl font-bold text-white sm:text-4xl"
+          style={display}
+        >
+          Ask the seller
+        </h1>
+        <p className="mb-8 mt-3 text-[#C8D3E0]">
+          Your question goes to the seller of this vehicle. Replies appear
+          under My inquiries.
+        </p>
 
-        <form onSubmit={handleSend} className="flex flex-col gap-8">
-          {/* Inquiry Message Input */}
-          <div className="flex flex-col gap-2">
-            <label className="text-[10px] uppercase font-bold tracking-[0.2em] text-gray-500 mb-1">
-              Inquiry Message
-            </label>
-            <textarea
-              className="w-full bg-[#0D0D0D] border border-gray-800 rounded-xl p-5 text-white focus:border-[#D4AF37] outline-none transition-all h-48 resize-none text-lg placeholder:text-gray-700"
-              placeholder="Describe your interest in this vehicle..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              required
-            />
-          </div>
-
-          {/* Send Button */}
-          <Button 
-            type="submit" 
-            className="flex items-center justify-center gap-3 py-6 text-lg font-black tracking-widest"
-            disabled={!message.trim()}
+        {vehicleId ? (
+          <InquiryForm onSubmit={handleSend} />
+        ) : (
+          <div
+            role="alert"
+            className="rounded-xl border border-red-400/30 bg-red-400/5 p-6 text-center"
           >
-            <Send size={20} /> SEND INQUIRY
-          </Button>
-        </form>
-      </div>
+            <p className="text-white">We couldn’t find which vehicle this is for.</p>
+            <Link
+              to={ROUTES.inventory}
+              className={`mt-4 inline-block rounded-lg bg-[#2DD4BF] px-5 py-2.5 font-semibold text-[#0A1628] transition-colors hover:bg-[#5EEAD4] ${focusRing}`}
+            >
+              Browse inventory
+            </Link>
+          </div>
+        )}
+      </motion.div>
     </div>
   );
-};
-
-export default SendInquiry;
+}

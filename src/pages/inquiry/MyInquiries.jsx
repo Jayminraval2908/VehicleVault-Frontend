@@ -1,140 +1,345 @@
 import React, { useEffect, useState } from "react";
-import inquiryService from "../../services/inquiryService";
-import Button from "../../components/common/Button";
-import Loader from "../../components/common/Loader";
-import { Trash2, ExternalLink, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import {
+  Trash2,
+  ExternalLink,
+  MessageCircle,
+  Loader2,
+  RefreshCw,
+} from "lucide-react";
+import inquiryService from "../../services/inquiryService";
+import { useAuth } from "../../components/context/AuthContext";
+import { display, focusRing } from "../../utils/theme";
 
-const MyInquiries = () => {
+const ROUTES = {
+  inventory: "/buyer/inventory",
+  login: "/login",
+};
+
+const STATUS_STYLES = {
+  pending: { label: "Pending", className: "bg-amber-300/10 text-amber-300" },
+  accepted: { label: "Accepted", className: "bg-[#2DD4BF]/10 text-[#2DD4BF]" },
+  replied: { label: "Replied", className: "bg-[#2DD4BF]/10 text-[#2DD4BF]" },
+  rejected: { label: "Rejected", className: "bg-red-400/10 text-red-400" },
+  closed: { label: "Closed", className: "bg-white/10 text-[#C8D3E0]" },
+};
+
+const getStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem("user"));
+  } catch {
+    return null;
+  }
+};
+
+const formatDate = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const getVehicleInfo = (inquiry) => {
+  const raw = inquiry.vehicle_id;
+  const vehicle = raw && typeof raw === "object" ? raw : null;
+  const id = vehicle?._id || (typeof raw === "string" ? raw : null);
+
+  const title = vehicle?.make
+    ? `${vehicle.make} ${vehicle.model || ""}`.trim()
+    : id
+    ? `Vehicle #${id.slice(-6)}`
+    : "Vehicle no longer listed";
+
+  return { id, title };
+};
+
+function InquiryCard({ inquiry, onDelete }) {
+  const reduceMotion = useReducedMotion();
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const { id: vehicleId, title } = getVehicleInfo(inquiry);
+  const statusKey = String(inquiry.status || "").toLowerCase();
+  const status = STATUS_STYLES[statusKey] || {
+    label: inquiry.status || "Unknown",
+    className: "bg-white/10 text-[#C8D3E0]",
+  };
+  const sentDate = formatDate(inquiry.createdAt);
+
+  const handleConfirm = async () => {
+    setDeleting(true);
+    await onDelete(inquiry._id);
+    setDeleting(false);
+    setConfirming(false);
+  };
+
+  return (
+    <motion.li
+      layout={!reduceMotion}
+      initial={reduceMotion ? false : { opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={reduceMotion ? { opacity: 0 } : { opacity: 0, x: -24 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="rounded-2xl border border-white/10 bg-[#0D1D33] p-4 transition-colors hover:border-[#2DD4BF]/40 sm:p-6"
+    >
+      <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+        <div className="flex min-w-0 flex-1 items-start gap-4">
+          <div className="shrink-0 rounded-xl bg-[#2DD4BF]/10 p-3 text-[#2DD4BF]">
+            <MessageCircle size={22} aria-hidden="true" />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <h3
+              className="truncate text-lg font-semibold text-white sm:text-xl"
+              style={display}
+            >
+              {title}
+            </h3>
+
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <span
+                className={`rounded-md px-2.5 py-0.5 text-sm font-medium ${status.className}`}
+              >
+                {status.label}
+              </span>
+              {sentDate && (
+                <span className="text-sm text-[#8EA0B5]">Sent {sentDate}</span>
+              )}
+            </div>
+
+            <p className="mt-3 line-clamp-3 leading-relaxed text-[#C8D3E0]">
+              “{inquiry.message}”
+            </p>
+
+            {inquiry.reply && (
+              <div className="mt-4 rounded-xl border border-[#2DD4BF]/25 bg-[#2DD4BF]/5 p-4">
+                <p className="text-sm font-semibold text-[#2DD4BF]">Reply</p>
+                <div className="mt-1 max-h-32 overflow-y-auto pr-2">
+                  <p className="leading-relaxed text-[#C8D3E0]">
+                    {inquiry.reply}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex shrink-0 gap-3 border-t border-white/10 pt-4 md:border-t-0 md:pt-0">
+          {vehicleId && (
+            <Link
+              to={`/vehicle/${vehicleId}`}
+              className={`flex flex-1 items-center justify-center gap-2 rounded-lg border border-white/20 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:border-[#2DD4BF] hover:text-[#2DD4BF] md:flex-none ${focusRing}`}
+            >
+              <ExternalLink size={16} aria-hidden="true" />
+              View vehicle
+            </Link>
+          )}
+          <button
+            type="button"
+            onClick={() => setConfirming(true)}
+            aria-label="Delete this inquiry"
+            className={`flex items-center justify-center rounded-lg bg-red-400/10 px-3.5 py-2.5 text-red-400 transition-colors hover:bg-red-500 hover:text-white ${focusRing}`}
+          >
+            <Trash2 size={18} />
+          </button>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {confirming && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div
+              role="alertdialog"
+              aria-label="Confirm deleting this inquiry"
+              className="mt-4 flex flex-col gap-3 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <p className="text-sm text-[#C8D3E0]">
+                Delete this inquiry? This cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setConfirming(false)}
+                  disabled={deleting}
+                  className={`rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white transition-colors hover:border-white/50 disabled:opacity-50 ${focusRing}`}
+                >
+                  Keep it
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirm}
+                  disabled={deleting}
+                  className={`flex items-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600 disabled:opacity-60 ${focusRing}`}
+                >
+                  {deleting && <Loader2 size={14} className="animate-spin" />}
+                  {deleting ? "Deleting..." : "Yes, delete"}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.li>
+  );
+}
+
+function SkeletonList() {
+  return (
+    <ul className="grid gap-5" aria-busy="true" aria-label="Loading inquiries">
+      {[0, 1, 2].map((i) => (
+        <li
+          key={i}
+          className="h-40 rounded-2xl border border-white/10 bg-[#0D1D33] motion-safe:animate-pulse"
+        />
+      ))}
+    </ul>
+  );
+}
+
+export default function MyInquiries() {
+  const auth = useAuth();
+  const user = auth?.user || getStoredUser();
+  const userId = user?._id || user?.id;
+
   const [inquiries, setInquiries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
+    let active = true;
+
     const fetchInquiries = async () => {
-      try {
-        const storedUser = localStorage.getItem("user");
-        if (!storedUser) {
-          toast.warn("Please login to view your inquiries");
-          return;
-        }
-
-        const user = JSON.parse(storedUser);
-        const userId = user._id || user.id;
-
-        const response = await inquiryService.getInquiriesByBuyer(userId);
-
-        // Handle potential nested data structure from Axios
-        const data = response.data?.data || response.data || [];
-        setInquiries(Array.isArray(data) ? data : []);
-
-      } catch (err) {
-        console.error("Fetch Error:", err);
-        toast.error("Unable to load inquiries at this time.");
-      } finally {
+      if (!userId) {
         setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setFailed(false);
+
+      try {
+        const response = await inquiryService.getInquiriesByBuyer(userId);
+        if (!active) return;
+
+        const data = response.data?.data || response.data || [];
+        const list = Array.isArray(data) ? [...data] : [];
+        list.sort(
+          (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+        );
+        setInquiries(list);
+      } catch (err) {
+        if (!active) return;
+        console.error("Fetch inquiries error:", err);
+        setFailed(true);
+      } finally {
+        if (active) setLoading(false);
       }
     };
+
     fetchInquiries();
-  }, []);
+    return () => {
+      active = false;
+    };
+  }, [userId, reloadKey]);
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to remove this inquiry?")) {
-      try {
-        await inquiryService.deleteInquiry(id);
-        setInquiries(prev => prev.filter((iq) => iq._id !== id));
-        toast.success("Inquiry successfully removed!");
-      } catch (err) {
-        toast.error("Failed to delete inquiry. Please try again.");
-      }
+    try {
+      await inquiryService.deleteInquiry(id);
+      setInquiries((prev) => prev.filter((iq) => iq._id !== id));
+      toast.success("Inquiry deleted");
+    } catch (err) {
+      console.error("Delete inquiry error:", err);
+      toast.error("Could not delete the inquiry. Please try again.");
     }
   };
 
-  if (loading) return <Loader fullScreen />;
-
   return (
-    <div className="p-8 bg-[#0D0D0D] min-h-screen text-white">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-4xl font-black mb-10 uppercase tracking-tighter">
-          My <span className="text-[#D4AF37]">Inquiries</span>
-        </h1>
+    <div className="min-h-screen bg-[#0A1628] p-5 text-[#C8D3E0] sm:p-8">
+      <div className="mx-auto max-w-5xl">
+        <header className="mb-8 sm:mb-10">
+          <h1
+            className="text-3xl font-bold text-white sm:text-4xl"
+            style={display}
+          >
+            My inquiries
+          </h1>
+          <p className="mt-2 text-[#8EA0B5]">
+            Questions you’ve sent to sellers, and their replies.
+          </p>
+        </header>
 
-        {inquiries.length === 0 ? (
-          <div className="border border-dashed border-gray-800 p-20 text-center rounded-3xl text-gray-500 bg-[#111111]/30">
-            No active inquiries found in your vault.
+        {loading ? (
+          <SkeletonList />
+        ) : !userId ? (
+          <div className="rounded-2xl border border-dashed border-white/20 p-10 text-center sm:p-16">
+            <p className="text-white">Log in to see your inquiries.</p>
+            <Link
+              to={ROUTES.login}
+              className={`mt-5 inline-block rounded-lg bg-[#2DD4BF] px-6 py-3 font-semibold text-[#0A1628] transition-colors hover:bg-[#5EEAD4] ${focusRing}`}
+            >
+              Log in
+            </Link>
           </div>
+        ) : failed ? (
+          <div
+            role="alert"
+            className="rounded-2xl border border-red-400/30 bg-red-400/5 p-10 text-center sm:p-16"
+          >
+            <p className="text-white">We couldn’t load your inquiries.</p>
+            <button
+              type="button"
+              onClick={() => setReloadKey((k) => k + 1)}
+              className={`mt-5 inline-flex items-center gap-2 rounded-lg border border-white/20 px-5 py-2.5 font-medium text-white transition-colors hover:border-[#2DD4BF] hover:text-[#2DD4BF] ${focusRing}`}
+            >
+              <RefreshCw size={16} />
+              Try again
+            </button>
+          </div>
+        ) : inquiries.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-dashed border-white/20 p-10 text-center sm:p-16"
+          >
+            <p className="text-lg text-white">No inquiries yet.</p>
+            <p className="mt-2 text-[#8EA0B5]">
+              Open a vehicle and send the seller a question. It will show up
+              here.
+            </p>
+            <Link
+              to={ROUTES.inventory}
+              className={`mt-6 inline-block rounded-lg bg-[#2DD4BF] px-6 py-3 font-semibold text-[#0A1628] transition-colors hover:bg-[#5EEAD4] ${focusRing}`}
+            >
+              Browse inventory
+            </Link>
+          </motion.div>
         ) : (
-          <div className="grid gap-6">
-            {inquiries.map((iq) => (
-              <div
-                key={iq._id}
-                className="bg-[#111111] border border-gray-800 p-6 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 hover:border-[#D4AF37]/40 transition-all group relative overflow-hidden"
-              >
-                <div className="flex items-start gap-5 flex-1">
-                  <div className="bg-[#D4AF37]/10 p-4 rounded-xl shrink-0">
-                    <MessageCircle className="text-[#D4AF37]" size={24} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xl font-bold text-gray-100 uppercase tracking-tight">
-                      {iq.vehicle_id?.make ? `${iq.vehicle_id.make} ${iq.vehicle_id.model}` : `Vehicle #${iq.vehicle_id?._id?.slice(-6) || 'Unknown'}`}
-                    </h3>
-                    
-                    <p className="text-sm text-gray-500 italic mt-1 line-clamp-2 leading-relaxed">
-                      "{iq.message}"
-                    </p>
-
-                    <div className="flex items-center gap-4 mt-3">
-                      <div className="flex items-center gap-2">
-                         <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">Status</span>
-                         <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${
-                            iq.status === "Pending" ? "bg-yellow-500/10 text-yellow-500" : 
-                            iq.status === "Accepted" ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
-                          }`}>
-                            {iq.status}
-                          </span>
-                      </div>
-                      <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
-                        Sent: {iq.createdAt ? new Date(iq.createdAt).toLocaleDateString() : 'N/A'}
-                      </span>
-                    </div>
-
-                    {iq.reply && (
-                      <div className="mt-5 bg-green-500/5 border border-green-500/20 p-4 rounded-xl relative">
-                        <span className="absolute -top-2 left-3 px-2 bg-[#111] text-green-500 text-[9px] font-black uppercase tracking-widest">
-                          Official Reply
-                        </span>
-                        {/* Scrollable reply area for long text */}
-                        <div className="max-h-32 overflow-y-auto pr-2 custom-scrollbar">
-                           <p className="text-sm text-gray-300 leading-relaxed italic">
-                             {iq.reply}
-                           </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex flex-row md:flex-col lg:flex-row gap-3 w-full md:w-auto shrink-0 border-t md:border-t-0 border-gray-800 pt-4 md:pt-0">
-                  <Link to={`/vehicle/${iq.vehicle_id?._id || iq.vehicle_id}`} className="flex-1">
-                    <Button variant="outline" className="w-full flex items-center justify-center gap-2 border-gray-700 text-xs font-bold uppercase tracking-widest py-3">
-                      <ExternalLink size={14} /> View Car
-                    </Button>
-                  </Link>
-                  <Button
-                    variant="danger"
-                    onClick={() => handleDelete(iq._id)}
-                    className="flex-1 md:flex-none p-3 bg-red-500/10 hover:bg-red-600 text-red-500 hover:text-white rounded-xl transition-all flex items-center justify-center"
-                  >
-                    <Trash2 size={16} />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+          <ul className="grid gap-5">
+            <AnimatePresence initial={true}>
+              {inquiries.map((inquiry) => (
+                <InquiryCard
+                  key={inquiry._id}
+                  inquiry={inquiry}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </AnimatePresence>
+          </ul>
         )}
       </div>
     </div>
   );
-};
-
-export default MyInquiries;
+}

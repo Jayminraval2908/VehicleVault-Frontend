@@ -1,5 +1,6 @@
 import React from "react";
 import { X, Check, Trash2, Clock } from "lucide-react";
+import { display } from "../../utils/theme";
 
 const PendingVehicle = ({ isOpen, onClose, vehicles, onApprove, onReject }) => {
   if (!isOpen) return null;
@@ -7,49 +8,71 @@ const PendingVehicle = ({ isOpen, onClose, vehicles, onApprove, onReject }) => {
   return (
     <div className="fixed inset-0 z-[100] flex justify-end">
       {/* Overlay */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      
-      {/* Drawer Content */}
-      <div className="relative w-full max-w-md bg-[#111] border-l border-gray-800 h-full shadow-2xl flex flex-col">
-        <div className="p-6 border-b border-gray-800 flex justify-between items-center bg-[#0D0D0D]">
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Drawer */}
+      <div className="relative flex h-full w-full max-w-md flex-col border-l border-white/10 bg-[#0A1628] shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-white/10 bg-[#0D1D33] p-6">
           <div>
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <Clock className="text-amber-500" size={20} />
-              Pending <span className="text-amber-500">Approvals</span>
+            <h2
+              className="flex items-center gap-2 text-xl font-bold text-white"
+              style={display}
+            >
+              <Clock className="text-[#2DD4BF]" size={20} />
+              Pending <span className="text-[#2DD4BF]">Approvals</span>
             </h2>
-            <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">
+            <p className="mt-1 text-[10px] uppercase tracking-widest text-[#8EA0B5]">
               {vehicles.length} Vehicles Awaiting Review
             </p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full text-gray-400">
+          <button
+            onClick={onClose}
+            className="rounded-full p-2 text-[#8EA0B5] transition hover:bg-white/5 hover:text-white"
+          >
             <X size={24} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        {/* List */}
+        <div className="flex-1 space-y-4 overflow-y-auto p-6">
           {vehicles.length === 0 ? (
-            <div className="text-center py-20 text-gray-600 italic">No pending requests</div>
+            <div className="py-20 text-center italic text-[#8EA0B5]">
+              No pending requests
+            </div>
           ) : (
             vehicles.map((v) => (
-              <div key={v._id} className="p-4 bg-white/5 border border-gray-800 rounded-2xl group hover:border-amber-500/30 transition-all">
-                <div className="flex justify-between items-start mb-3">
+              <div
+                key={v._id}
+                className="group rounded-2xl border border-white/10 bg-[#102238] p-4 transition-all hover:border-[#2DD4BF]/30"
+              >
+                <div className="mb-3 flex items-start justify-between">
                   <div>
-                    <h3 className="font-bold text-white uppercase tracking-tight">{v.make} {v.model}</h3>
-                    <p className="text-[10px] text-gray-500">{v.year} • {v.fuel_type}</p>
+                    <h3 className="font-bold uppercase tracking-tight text-white">
+                      {v.make} {v.model}
+                    </h3>
+                    <p className="text-[10px] text-[#8EA0B5]">
+                      {v.year} • {v.fuel_type}
+                    </p>
                   </div>
-                  <span className="text-amber-500 font-bold text-xs">₹{v.price?.toLocaleString()}</span>
+                  <span className="text-xs font-bold text-[#2DD4BF]">
+                    ₹{v.price?.toLocaleString()}
+                  </span>
                 </div>
 
-                <div className="flex gap-2 mt-4">
-                  <button 
+                <div className="mt-4 flex gap-2">
+                  <button
                     onClick={() => onApprove(v._id)}
-                    className="flex-1 bg-green-600/10 hover:bg-green-600 text-green-500 hover:text-white py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center gap-1"
+                    className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-emerald-500/10 py-2 text-[10px] font-black uppercase text-emerald-400 transition-all hover:bg-emerald-500 hover:text-white"
                   >
                     <Check size={14} /> Approve
                   </button>
-                  <button 
+                  <button
                     onClick={() => onReject(v._id)}
-                    className="flex-1 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center gap-1"
+                    className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-red-500/10 py-2 text-[10px] font-black uppercase text-red-400 transition-all hover:bg-red-500 hover:text-white"
                   >
                     <Trash2 size={14} /> Reject
                   </button>
